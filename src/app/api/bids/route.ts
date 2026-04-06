@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { randomUUID } from 'crypto';
+import { broadcastBid } from '@/lib/pusher-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -104,6 +105,36 @@ export async function POST(request: NextRequest) {
         },
         { status: 400 },
       );
+    }
+
+    // Broadcast the new bid via Pusher (non-blocking)
+    try {
+      // Get auction_id from the cake
+      const auctionRows = await sql`
+        SELECT auction_id FROM cakes WHERE id = ${cake_id} LIMIT 1
+      `;
+      const auctionId = auctionRows[0]?.auction_id;
+
+      // Get bidder info
+      const bidderRows = await sql`
+        SELECT name, phone FROM bidders WHERE id = ${bidder_id} LIMIT 1
+      `;
+      const bidderName = bidderRows[0]?.name ?? 'Unknown';
+      const bidderPhone = bidderRows[0]?.phone ?? undefined;
+
+      if (auctionId) {
+        await broadcastBid(auctionId, {
+          id: result[0].id,
+          cake_id: result[0].cake_id,
+          bidder_id: result[0].bidder_id,
+          amount: Number(result[0].amount),
+          bid_time: result[0].bid_time,
+          bidder_name: bidderName,
+          bidder_phone: bidderPhone,
+        });
+      }
+    } catch (pusherErr) {
+      console.error('Pusher broadcastBid error (non-fatal):', pusherErr);
     }
 
     return NextResponse.json(result[0], { status: 201 });

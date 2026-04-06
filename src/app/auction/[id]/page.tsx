@@ -7,6 +7,7 @@ import { getEffectiveStatus } from '@/lib/auction-status';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { CakeCard } from '@/components/public/CakeCard';
+import { usePusherChannel } from '@/hooks/usePusher';
 
 /* ------------------------------------------------------------------ */
 /*  Countdown helper                                                   */
@@ -75,7 +76,14 @@ export default function AuctionPage() {
       const rulesData = rulesRes.ok ? await rulesRes.json() : [];
 
       setAuction(auctionData);
-      setCakes(Array.isArray(cakesData) ? cakesData : []);
+      // Map highest_bid from the API to currentBid for CakeCard
+      const mappedCakes = (Array.isArray(cakesData) ? cakesData : []).map(
+        (c: Cake & { highest_bid?: number; currentBid?: number }) => ({
+          ...c,
+          currentBid: c.currentBid ?? (c.highest_bid ? Number(c.highest_bid) : undefined),
+        }),
+      );
+      setCakes(mappedCakes);
       setRules(Array.isArray(rulesData) ? rulesData : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load auction');
@@ -87,6 +95,53 @@ export default function AuctionPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  /* ── Pusher real-time updates ─────────────────────────── */
+
+  const { bind, unbind } = usePusherChannel(auctionId);
+
+  useEffect(() => {
+    // On 'new-bid': update the cake's current bid in local state
+    const handleNewBid = (data: { cake_id: string; amount: number }) => {
+      setCakes((prev) =>
+        prev.map((cake) =>
+          cake.id === data.cake_id
+            ? { ...cake, currentBid: Number(data.amount) }
+            : cake,
+        ),
+      );
+    };
+
+    // On 'auction-state-change': re-fetch auction data
+    const handleAuctionStateChange = () => {
+      fetchData();
+    };
+
+    // On 'new-cake': add the cake to local state
+    const handleNewCake = (data: Cake & { highest_bid?: number }) => {
+      setCakes((prev) => {
+        // Avoid duplicates
+        if (prev.some((c) => c.id === data.id)) return prev;
+        return [
+          ...prev,
+          {
+            ...data,
+            currentBid: data.highest_bid ? Number(data.highest_bid) : undefined,
+          },
+        ];
+      });
+    };
+
+    bind('new-bid', handleNewBid);
+    bind('auction-state-change', handleAuctionStateChange);
+    bind('new-cake', handleNewCake);
+
+    return () => {
+      unbind('new-bid', handleNewBid);
+      unbind('auction-state-change', handleAuctionStateChange);
+      unbind('new-cake', handleNewCake);
+    };
+  }, [bind, unbind, fetchData]);
 
   /* ── Derived state ─────────────────────────────────────── */
 

@@ -3,6 +3,7 @@ import { getDb } from '@/lib/db';
 import { verifyAdmin } from '@/lib/admin-guard';
 import { cakeSchema } from '@/lib/validators';
 import { uploadImage } from '@/lib/imgbb';
+import { broadcastNewCake } from '@/lib/pusher-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -89,6 +90,13 @@ export async function POST(request: NextRequest) {
       )
       RETURNING *
     `;
+
+    // Broadcast new cake via Pusher (non-blocking)
+    try {
+      await broadcastNewCake(parsed.auction_id, rows[0]);
+    } catch (pusherErr) {
+      console.error('Pusher broadcastNewCake error (non-fatal):', pusherErr);
+    }
 
     return NextResponse.json(rows[0], { status: 201 });
   } catch (error) {

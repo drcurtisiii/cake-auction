@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { auctionSchema } from '@/lib/validators';
 import { verifyAdmin } from '@/lib/admin-guard';
+import { broadcastAuctionStateChange } from '@/lib/pusher-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,6 +93,15 @@ export async function PUT(
 
     if (rows.length === 0) {
       return NextResponse.json({ error: 'Auction not found' }, { status: 404 });
+    }
+
+    // Broadcast auction state change via Pusher if status changed (non-blocking)
+    if (data.status && data.status !== existing[0].status) {
+      try {
+        await broadcastAuctionStateChange(id, data.status);
+      } catch (pusherErr) {
+        console.error('Pusher broadcastAuctionStateChange error (non-fatal):', pusherErr);
+      }
     }
 
     return NextResponse.json(rows[0]);
