@@ -49,6 +49,7 @@ export default function AuctionDetailPage() {
   const [showDelete, setShowDelete] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const detailsPublishHandlerRef = useRef<(() => Promise<boolean>) | null>(null);
 
   const fetchAuction = useCallback(async () => {
     try {
@@ -68,6 +69,17 @@ export default function AuctionDetailPage() {
   }, [fetchAuction]);
 
   async function handlePublish() {
+    if (activeTab === 'details' && detailsPublishHandlerRef.current) {
+      const published = await detailsPublishHandlerRef.current();
+      if (published) {
+        setShowPublish(false);
+        setActionSuccess('Auction published.');
+        setActionError('');
+        await fetchAuction();
+      }
+      return;
+    }
+
     if (!auction) return;
     setActionError('');
     setActionSuccess('');
@@ -168,7 +180,13 @@ export default function AuctionDetailPage() {
 
       {/* Tab Content */}
       {activeTab === 'details' && (
-        <DetailsTab auction={auction} onSaved={fetchAuction} />
+        <DetailsTab
+          auction={auction}
+          onSaved={fetchAuction}
+          registerPublishHandler={(handler) => {
+            detailsPublishHandlerRef.current = handler;
+          }}
+        />
       )}
       {activeTab === 'cakes' && <CakesTab auctionId={auctionId} />}
       {activeTab === 'rules' && <RulesTab auctionId={auctionId} />}
@@ -303,9 +321,11 @@ function AuctionActionBar({
 function DetailsTab({
   auction,
   onSaved,
+  registerPublishHandler,
 }: {
   auction: AuctionWithStatus;
   onSaved: () => void;
+  registerPublishHandler: (handler: (() => Promise<boolean>) | null) => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -430,11 +450,10 @@ function DetailsTab({
     return Object.keys(newErrors).length === 0;
   }
 
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
+  async function saveDetails(publishAfter = false): Promise<boolean> {
     setServerError('');
     setSuccessMsg('');
-    if (!validate()) return;
+    if (!validate()) return false;
 
     setSaving(true);
     try {
@@ -448,6 +467,7 @@ function DetailsTab({
         pickup_location: form.pickup_location || undefined,
         description: form.description || undefined,
         thank_you_msg: form.thank_you_msg || undefined,
+        status: publishAfter ? 'published' : undefined,
         imgbb_url: imageBase64 ? undefined : auction.imgbb_url ?? undefined,
         image: imageBase64 || undefined,
       };
@@ -463,14 +483,44 @@ function DetailsTab({
         throw new Error(data?.error || 'Failed to save');
       }
 
-      setSuccessMsg('Auction saved successfully.');
-      onSaved();
+      setSuccessMsg(
+        publishAfter ? 'Auction saved and published.' : 'Auction saved successfully.',
+      );
+      setImageBase64('');
+      await onSaved();
+      return true;
     } catch (err) {
       setServerError(err instanceof Error ? err.message : 'Something went wrong');
+      return false;
     } finally {
       setSaving(false);
     }
   }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    await saveDetails(false);
+  }
+
+  useEffect(() => {
+    registerPublishHandler(() => saveDetails(true));
+    return () => registerPublishHandler(null);
+  }, [
+    registerPublishHandler,
+    form,
+    imageBase64,
+    auction.imgbb_url,
+    auction.id,
+    auction.title,
+    auction.description,
+    auction.preview_at,
+    auction.live_at,
+    auction.close_at,
+    auction.pickup_date,
+    auction.pickup_time,
+    auction.pickup_location,
+    auction.thank_you_msg,
+  ]);
 
   return (
     <>
