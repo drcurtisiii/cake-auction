@@ -740,6 +740,7 @@ function CakesTab({ auctionId }: { auctionId: string }) {
   const [editingCake, setEditingCake] = useState<Cake | null>(null);
   const [saving, setSaving] = useState(false);
   const [deletingCakeId, setDeletingCakeId] = useState<string | null>(null);
+  const [approvingCakeId, setApprovingCakeId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   const [cakeForm, setCakeForm] = useState(EMPTY_CAKE_FORM);
@@ -889,10 +890,13 @@ function CakesTab({ auctionId }: { auctionId: string }) {
             description: cakeForm.description || undefined,
             donor_name: cakeForm.donor_name || undefined,
             beneficiary_kid: cakeForm.beneficiary_kid || undefined,
+            submitter_email: editingCake?.submitter_email || undefined,
+            submitter_phone: editingCake?.submitter_phone || undefined,
             starting_price: Number(cakeForm.starting_price) || 0,
             min_increment: Number(cakeForm.min_increment) || 5,
             max_increment: Number(cakeForm.max_increment) || 25,
             sort_order: editingCake?.sort_order ?? cakes.length,
+            approval_status: editingCake?.approval_status ?? 'approved',
             imgbb_url: imageBase64 ? undefined : editingCake?.imgbb_url,
             image: imageBase64 || undefined,
           }),
@@ -947,6 +951,30 @@ function CakesTab({ auctionId }: { auctionId: string }) {
     }
   }
 
+  async function handleApproveCake(cake: Cake) {
+    setError('');
+    setApprovingCakeId(cake.id);
+    try {
+      const res = await fetch(`/api/cakes/${cake.id}/approval`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approval_status: 'approved' }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || 'Failed to approve cake');
+      }
+      await fetchCakes();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to approve cake');
+    } finally {
+      setApprovingCakeId(null);
+    }
+  }
+
+  const pendingCakes = cakes.filter((cake) => cake.approval_status === 'pending');
+  const approvedCakes = cakes.filter((cake) => cake.approval_status !== 'pending');
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -959,7 +987,7 @@ function CakesTab({ auctionId }: { auctionId: string }) {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-800">
-          Cakes ({cakes.length})
+          Cakes ({approvedCakes.length})
         </h2>
         <Button size="sm" onClick={openAddModal}>
           + Add Cake
@@ -972,13 +1000,76 @@ function CakesTab({ auctionId }: { auctionId: string }) {
         </div>
       )}
 
-      {cakes.length === 0 && !showAdd ? (
+      {pendingCakes.length > 0 && (
+        <div className="mb-8">
+          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+            Pending Submissions ({pendingCakes.length})
+          </h3>
+          <div className="space-y-3">
+            {pendingCakes.map((cake) => (
+              <div
+                key={cake.id}
+                className="flex items-center gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 shadow-sm"
+              >
+                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-white">
+                  {cake.imgbb_url ? (
+                    <img
+                      src={cake.imgbb_url}
+                      alt={cake.name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : null}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-gray-900">{cake.name}</p>
+                  <p className="text-sm text-gray-600">
+                    by {cake.donor_name || 'Unknown donor'}
+                    {cake.flavor ? ` • ${cake.flavor}` : ''}
+                  </p>
+                  {cake.submitter_email && (
+                    <p className="text-xs text-gray-500">{cake.submitter_email}</p>
+                  )}
+                  {cake.submitter_phone && (
+                    <p className="text-xs text-gray-500">{cake.submitter_phone}</p>
+                  )}
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => handleApproveCake(cake)}
+                    loading={approvingCakeId === cake.id}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => openEditModal(cake)}
+                  >
+                    Review
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    loading={deletingCakeId === cake.id}
+                    onClick={() => handleDeleteCake(cake)}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {approvedCakes.length === 0 && pendingCakes.length === 0 && !showAdd ? (
         <div className="rounded-xl border-2 border-dashed border-gray-300 px-6 py-12 text-center">
           <p className="text-sm text-gray-500">No cakes yet. Add one to get started.</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {cakes.map((cake) => (
+          {approvedCakes.map((cake) => (
             <div
               key={cake.id}
               className="flex items-center gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm"

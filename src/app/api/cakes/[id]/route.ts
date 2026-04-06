@@ -80,12 +80,20 @@ export async function PUT(
         flavor          = ${parsed.flavor ?? null},
         description     = ${parsed.description ?? null},
         donor_name      = ${parsed.donor_name ?? null},
+        submitter_email = ${parsed.submitter_email ?? null},
+        submitter_phone = ${parsed.submitter_phone ?? null},
         beneficiary_kid = ${parsed.beneficiary_kid ?? null},
         imgbb_url       = ${parsed.imgbb_url ?? null},
+        approval_status = ${parsed.approval_status ?? 'approved'},
         starting_price  = ${parsed.starting_price},
         min_increment   = ${parsed.min_increment},
         max_increment   = ${parsed.max_increment},
-        sort_order      = ${parsed.sort_order}
+        sort_order      = ${parsed.sort_order},
+        approved_at     = CASE
+          WHEN ${parsed.approval_status ?? 'approved'} = 'approved'
+            THEN COALESCE(approved_at, NOW())
+          ELSE approved_at
+        END
       WHERE id = ${id}
       RETURNING *
     `;

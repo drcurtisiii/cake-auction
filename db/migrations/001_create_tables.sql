@@ -31,12 +31,17 @@ CREATE TABLE cakes (
   flavor TEXT,
   description TEXT,
   donor_name TEXT,
+  submitter_email TEXT,
+  submitter_phone TEXT,
   beneficiary_kid TEXT,
   imgbb_url TEXT,
+  approval_status TEXT NOT NULL DEFAULT 'approved' CHECK (approval_status IN ('pending', 'approved')),
   starting_price NUMERIC(10,2) NOT NULL DEFAULT 0,
   min_increment NUMERIC(10,2) NOT NULL DEFAULT 5,
   max_increment NUMERIC(10,2) NOT NULL DEFAULT 25,
   sort_order INT NOT NULL DEFAULT 0,
+  submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  approved_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

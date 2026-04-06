@@ -46,12 +46,17 @@ export interface Cake {
   flavor?: string | null;
   description?: string | null;
   donor_name?: string | null;
+  submitter_email?: string | null;
+  submitter_phone?: string | null;
   beneficiary_kid?: string | null;
   imgbb_url?: string | null;
+  approval_status?: 'pending' | 'approved';
   starting_price: number;
   min_increment: number;
   max_increment: number;
   sort_order: number;
+  submitted_at?: string;
+  approved_at?: string | null;
   created_at: string;
 }
 

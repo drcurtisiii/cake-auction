@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const auth = await verifyAdmin(request);
     const sql = getDb();
     const cakes = await sql`
       SELECT
@@ -35,6 +36,7 @@ export async function GET(request: NextRequest) {
         GROUP BY cake_id
       ) b ON b.cake_id = c.id
       WHERE c.auction_id = ${auctionId}
+        AND (${auth.authenticated} = true OR c.approval_status = 'approved')
       ORDER BY c.sort_order ASC
     `;
 
@@ -74,20 +76,24 @@ export async function POST(request: NextRequest) {
     const rows = await sql`
       INSERT INTO cakes (
         auction_id, name, flavor, description,
-        donor_name, beneficiary_kid, imgbb_url,
-        starting_price, min_increment, max_increment, sort_order
+        donor_name, submitter_email, submitter_phone, beneficiary_kid, imgbb_url,
+        approval_status, starting_price, min_increment, max_increment, sort_order, approved_at
       ) VALUES (
         ${parsed.auction_id},
         ${parsed.name},
         ${parsed.flavor ?? null},
         ${parsed.description ?? null},
         ${parsed.donor_name ?? null},
+        ${parsed.submitter_email ?? null},
+        ${parsed.submitter_phone ?? null},
         ${parsed.beneficiary_kid ?? null},
         ${parsed.imgbb_url ?? null},
+        ${parsed.approval_status ?? 'approved'},
         ${parsed.starting_price},
         ${parsed.min_increment},
         ${parsed.max_increment},
-        ${parsed.sort_order}
+        ${parsed.sort_order},
+        ${parsed.approval_status === 'pending' ? null : new Date().toISOString()}
       )
       RETURNING *
     `;

@@ -1,0 +1,15 @@
+ALTER TABLE cakes
+ADD COLUMN IF NOT EXISTS submitter_email TEXT;
+
+ALTER TABLE cakes
+ADD COLUMN IF NOT EXISTS submitter_phone TEXT;
+
+ALTER TABLE cakes
+ADD COLUMN IF NOT EXISTS approval_status TEXT NOT NULL DEFAULT 'approved'
+CHECK (approval_status IN ('pending', 'approved'));
+
+ALTER TABLE cakes
+ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE cakes
+ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
