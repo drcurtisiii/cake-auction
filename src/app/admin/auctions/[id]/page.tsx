@@ -43,6 +43,12 @@ export default function AuctionDetailPage() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');
   const [activeTab, setActiveTab] = useState<Tab>('details');
+  const [actionError, setActionError] = useState('');
+  const [actionSuccess, setActionSuccess] = useState('');
+  const [showPublish, setShowPublish] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchAuction = useCallback(async () => {
     try {
@@ -60,6 +66,45 @@ export default function AuctionDetailPage() {
   useEffect(() => {
     fetchAuction();
   }, [fetchAuction]);
+
+  async function handlePublish() {
+    if (!auction) return;
+    setActionError('');
+    setActionSuccess('');
+    setPublishing(true);
+    try {
+      const res = await fetch(`/api/auctions/${auction.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'published' }),
+      });
+      if (!res.ok) throw new Error('Failed to publish');
+      setShowPublish(false);
+      setActionSuccess('Auction published.');
+      await fetchAuction();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to publish');
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!auction) return;
+    setActionError('');
+    setActionSuccess('');
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/auctions/${auction.id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to delete');
+      router.push('/admin/dashboard');
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to delete');
+      setDeleting(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -127,6 +172,128 @@ export default function AuctionDetailPage() {
       )}
       {activeTab === 'cakes' && <CakesTab auctionId={auctionId} />}
       {activeTab === 'rules' && <RulesTab auctionId={auctionId} />}
+
+      <AuctionActionBar
+        activeTab={activeTab}
+        auction={auction}
+        actionError={actionError}
+        actionSuccess={actionSuccess}
+        publishing={publishing}
+        deleting={deleting}
+        onPublish={() => setShowPublish(true)}
+        onDelete={() => setShowDelete(true)}
+      />
+
+      <Modal
+        isOpen={showPublish}
+        onClose={() => setShowPublish(false)}
+        title="Publish Auction"
+      >
+        <p className="text-sm text-gray-600 mb-6">
+          Publishing this auction will make it visible to bidders based on the
+          schedule you have set. Are you sure you want to publish?
+        </p>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setShowPublish(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handlePublish} loading={publishing}>
+            Publish
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={showDelete}
+        onClose={() => setShowDelete(false)}
+        title="Delete Auction"
+      >
+        <p className="text-sm text-gray-600 mb-6">
+          This will permanently delete the auction and all associated cakes,
+          bids, and rules. This action cannot be undone.
+        </p>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setShowDelete(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDelete} loading={deleting}>
+            Delete
+          </Button>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+function AuctionActionBar({
+  activeTab,
+  auction,
+  actionError,
+  actionSuccess,
+  publishing,
+  deleting,
+  onPublish,
+  onDelete,
+}: {
+  activeTab: Tab;
+  auction: AuctionWithStatus;
+  actionError: string;
+  actionSuccess: string;
+  publishing: boolean;
+  deleting: boolean;
+  onPublish: () => void;
+  onDelete: () => void;
+}) {
+  const saveDisabled = activeTab !== 'details';
+
+  return (
+    <div className="mt-8 border-t border-gray-200 pt-6">
+      {actionError && (
+        <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {actionError}
+        </div>
+      )}
+      {actionSuccess && (
+        <div className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+          {actionSuccess}
+        </div>
+      )}
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          type="submit"
+          form="auction-details-form"
+          disabled={saveDisabled}
+          title={
+            saveDisabled
+              ? 'Cake and rule changes save immediately on their own tabs.'
+              : undefined
+          }
+        >
+          Save Changes
+        </Button>
+
+        {auction.status === 'draft' && (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onPublish}
+            loading={publishing}
+          >
+            Publish
+          </Button>
+        )}
+
+        <div className="flex-1" />
+
+        <Button
+          type="button"
+          variant="danger"
+          onClick={onDelete}
+          loading={deleting}
+        >
+          Delete Auction
+        </Button>
+      </div>
     </div>
   );
 }
@@ -140,15 +307,10 @@ function DetailsTab({
   auction: AuctionWithStatus;
   onSaved: () => void;
 }) {
-  const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [serverError, setServerError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [showPublish, setShowPublish] = useState(false);
-  const [showDelete, setShowDelete] = useState(false);
-  const [publishing, setPublishing] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   const [form, setForm] = useState({
     title: auction.title,
@@ -229,39 +391,6 @@ function DetailsTab({
     }
   }
 
-  async function handlePublish() {
-    setPublishing(true);
-    try {
-      const res = await fetch(`/api/auctions/${auction.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'published' }),
-      });
-      if (!res.ok) throw new Error('Failed to publish');
-      setShowPublish(false);
-      setSuccessMsg('Auction published.');
-      onSaved();
-    } catch (err) {
-      setServerError(err instanceof Error ? err.message : 'Failed to publish');
-    } finally {
-      setPublishing(false);
-    }
-  }
-
-  async function handleDelete() {
-    setDeleting(true);
-    try {
-      const res = await fetch(`/api/auctions/${auction.id}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error('Failed to delete');
-      router.push('/admin/dashboard');
-    } catch (err) {
-      setServerError(err instanceof Error ? err.message : 'Failed to delete');
-      setDeleting(false);
-    }
-  }
-
   return (
     <>
       {serverError && (
@@ -275,7 +404,7 @@ function DetailsTab({
         </div>
       )}
 
-      <form onSubmit={handleSave} className="space-y-8">
+      <form id="auction-details-form" onSubmit={handleSave} className="space-y-8">
         {/* Basic Info */}
         <section>
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Basic Information</h2>
@@ -378,74 +507,7 @@ function DetailsTab({
             />
           </div>
         </section>
-
-        {/* Actions */}
-        <div className="flex flex-wrap items-center gap-3 border-t border-gray-200 pt-6">
-          <Button type="submit" loading={saving}>
-            Save Changes
-          </Button>
-
-          {auction.status === 'draft' && (
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setShowPublish(true)}
-            >
-              Publish
-            </Button>
-          )}
-
-          <div className="flex-1" />
-
-          <Button
-            type="button"
-            variant="danger"
-            onClick={() => setShowDelete(true)}
-          >
-            Delete Auction
-          </Button>
-        </div>
       </form>
-
-      {/* Publish Confirmation Modal */}
-      <Modal
-        isOpen={showPublish}
-        onClose={() => setShowPublish(false)}
-        title="Publish Auction"
-      >
-        <p className="text-sm text-gray-600 mb-6">
-          Publishing this auction will make it visible to bidders based on the
-          schedule you have set. Are you sure you want to publish?
-        </p>
-        <div className="flex justify-end gap-3">
-          <Button variant="secondary" onClick={() => setShowPublish(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handlePublish} loading={publishing}>
-            Publish
-          </Button>
-        </div>
-      </Modal>
-
-      {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={showDelete}
-        onClose={() => setShowDelete(false)}
-        title="Delete Auction"
-      >
-        <p className="text-sm text-gray-600 mb-6">
-          This will permanently delete the auction and all associated cakes,
-          bids, and rules. This action cannot be undone.
-        </p>
-        <div className="flex justify-end gap-3">
-          <Button variant="secondary" onClick={() => setShowDelete(false)}>
-            Cancel
-          </Button>
-          <Button variant="danger" onClick={handleDelete} loading={deleting}>
-            Delete
-          </Button>
-        </div>
-      </Modal>
     </>
   );
 }
