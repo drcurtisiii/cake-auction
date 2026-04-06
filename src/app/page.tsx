@@ -4,6 +4,8 @@ import { enrichAuctionWithStatus } from '@/lib/auction-status';
 import { Badge } from '@/components/ui/Badge';
 import type { Auction, AuctionWithStatus } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return 'TBD';
 
