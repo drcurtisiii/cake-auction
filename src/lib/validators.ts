@@ -16,7 +16,7 @@ export const auctionSchema = z.object({
   preview_at: z.string().optional(),
   live_at: z.string().optional(),
   close_at: z.string().optional(),
-  status: z.enum(["draft", "published"]).default("draft"),
+  status: z.enum(["draft", "published"]).optional(),
   pickup_date: z.string().optional(),
   pickup_time: z.string().optional(),
   pickup_location: z.string().optional(),

@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       INSERT INTO auctions (title, description, imgbb_url, preview_at, live_at, close_at, status,
                             pickup_date, pickup_time, pickup_location, thank_you_msg)
       VALUES (${data.title}, ${data.description ?? null}, ${data.imgbb_url ?? null}, ${data.preview_at ?? null},
-              ${data.live_at ?? null}, ${data.close_at ?? null}, ${data.status},
+              ${data.live_at ?? null}, ${data.close_at ?? null}, ${data.status ?? 'draft'},
               ${data.pickup_date ?? null}, ${data.pickup_time ?? null},
               ${data.pickup_location ?? null}, ${data.thank_you_msg ?? null})
       RETURNING *
