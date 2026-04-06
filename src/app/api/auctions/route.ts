@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { auctionSchema } from '@/lib/validators';
 import { verifyAdmin } from '@/lib/admin-guard';
+import { seedDefaultRules } from '@/lib/default-rules';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +49,13 @@ export async function POST(request: NextRequest) {
               ${data.pickup_location ?? null}, ${data.thank_you_msg ?? null})
       RETURNING *
     `;
+
+    try {
+      await seedDefaultRules(rows[0].id);
+    } catch (seedError) {
+      await sql`DELETE FROM auctions WHERE id = ${rows[0].id}`;
+      throw seedError;
+    }
 
     return NextResponse.json(rows[0], { status: 201 });
   } catch (error) {

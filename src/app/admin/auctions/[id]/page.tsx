@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Auction, Cake, Rule, AuctionWithStatus } from '@/types';
 import { enrichAuctionWithStatus } from '@/lib/auction-status';
+import { DEFAULT_RULES } from '@/lib/default-rules';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -936,8 +937,11 @@ function CakesTab({ auctionId }: { auctionId: string }) {
 function RulesTab({ auctionId }: { auctionId: string }) {
   const [rules, setRules] = useState<Rule[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
+  const [editRuleText, setEditRuleText] = useState('');
   const [newRule, setNewRule] = useState('');
   const [saving, setSaving] = useState(false);
+  const [seeding, setSeeding] = useState(false);
   const [error, setError] = useState('');
 
   const fetchRules = useCallback(async () => {
@@ -956,6 +960,17 @@ function RulesTab({ auctionId }: { auctionId: string }) {
   useEffect(() => {
     fetchRules();
   }, [fetchRules]);
+
+  function startEditingRule(rule: Rule) {
+    setEditingRuleId(rule.id);
+    setEditRuleText(rule.rule_text);
+    setError('');
+  }
+
+  function cancelEditingRule() {
+    setEditingRuleId(null);
+    setEditRuleText('');
+  }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -985,14 +1000,84 @@ function RulesTab({ auctionId }: { auctionId: string }) {
     }
   }
 
+  async function handleSaveRule(ruleId: string) {
+    if (!editRuleText.trim()) return;
+    setError('');
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/rules/${ruleId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          auction_id: auctionId,
+          rule_text: editRuleText.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || 'Failed to update rule');
+      }
+      cancelEditingRule();
+      await fetchRules();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update rule');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleDeleteRule(ruleId: string) {
     try {
-      await fetch(`/api/rules/${ruleId}`, {
+      const res = await fetch(`/api/rules/${ruleId}`, {
         method: 'DELETE',
       });
-      fetchRules();
-    } catch {
-      // silently fail
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || 'Failed to delete rule');
+      }
+      if (editingRuleId === ruleId) {
+        cancelEditingRule();
+      }
+      await fetchRules();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete rule');
+    }
+  }
+
+  async function handleSeedDefaults() {
+    setError('');
+    setSeeding(true);
+    try {
+      const existingTexts = new Set(
+        rules.map((rule) => rule.rule_text.trim().toLowerCase()),
+      );
+      const rulesToAdd = DEFAULT_RULES.filter(
+        (ruleText) => !existingTexts.has(ruleText.trim().toLowerCase()),
+      );
+
+      for (let i = 0; i < rulesToAdd.length; i++) {
+        const res = await fetch('/api/rules', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            auction_id: auctionId,
+            rule_text: rulesToAdd[i],
+            sort_order: rules.length + i,
+          }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => null);
+          throw new Error(data?.error || 'Failed to seed default rules');
+        }
+      }
+
+      await fetchRules();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to seed default rules',
+      );
+    } finally {
+      setSeeding(false);
     }
   }
 
@@ -1006,9 +1091,20 @@ function RulesTab({ auctionId }: { auctionId: string }) {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-800 mb-6">
-        Rules ({rules.length})
-      </h2>
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-gray-800">
+          Rules ({rules.length})
+        </h2>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          loading={seeding}
+          onClick={handleSeedDefaults}
+        >
+          Seed Default Rules
+        </Button>
+      </div>
 
       {/* Add rule form */}
       {error && (
@@ -1033,7 +1129,7 @@ function RulesTab({ auctionId }: { auctionId: string }) {
       {rules.length === 0 ? (
         <div className="rounded-xl border-2 border-dashed border-gray-300 px-6 py-12 text-center">
           <p className="text-sm text-gray-500">
-            No rules yet. Add rules that bidders must agree to.
+            No rules yet. Seed the default rules or add custom rules for this auction.
           </p>
         </div>
       ) : (
@@ -1046,26 +1142,62 @@ function RulesTab({ auctionId }: { auctionId: string }) {
               <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#E8EEF6] text-xs font-semibold text-[#1B3C6D]">
                 {i + 1}
               </span>
-              <p className="flex-1 text-sm text-gray-800">{rule.rule_text}</p>
-              <button
-                onClick={() => handleDeleteRule(rule.id)}
-                className="shrink-0 rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                aria-label="Delete rule"
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
+              {editingRuleId === rule.id ? (
+                <div className="flex flex-1 items-center gap-2">
+                  <Input
+                    value={editRuleText}
+                    onChange={(e) => setEditRuleText(e.target.value)}
+                    className="flex-1"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSaveRule(rule.id);
+                      }
+                      if (e.key === 'Escape') {
+                        cancelEditingRule();
+                      }
+                    }}
                   />
-                </svg>
-              </button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    loading={saving}
+                    onClick={() => handleSaveRule(rule.id)}
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={cancelEditingRule}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <p className="flex-1 text-sm text-gray-800">{rule.rule_text}</p>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => startEditingRule(rule)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="danger"
+                      onClick={() => handleDeleteRule(rule.id)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </>
+              )}
             </li>
           ))}
         </ol>
