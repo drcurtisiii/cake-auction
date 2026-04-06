@@ -62,7 +62,7 @@ export default function AdminLoginPage() {
   if (checking) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#7B1113] border-t-transparent" />
       </div>
     );
   }
@@ -72,9 +72,9 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-sm">
         <div className="rounded-2xl bg-white p-8 shadow-lg ring-1 ring-gray-200">
           <div className="mb-6 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#F5E6D0]">
               <svg
-                className="h-6 w-6 text-indigo-600"
+                className="h-6 w-6 text-[#7B1113]"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
@@ -111,7 +111,7 @@ export default function AdminLoginPage() {
                   setPasscode(val);
                   setError('');
                 }}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-2xl font-mono tracking-[0.3em] placeholder:text-gray-300 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-2xl font-mono tracking-[0.3em] placeholder:text-gray-300 focus:border-[#9B1517] focus:outline-none focus:ring-2 focus:ring-[#7B1113]/20"
                 autoFocus
               />
             </div>
@@ -125,7 +125,7 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading || passcode.length !== 6}
-              className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-lg bg-[#7B1113] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#5C0D0F] focus:outline-none focus:ring-2 focus:ring-[#9B1517] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">

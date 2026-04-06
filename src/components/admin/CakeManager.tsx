@@ -181,7 +181,7 @@ export const CakeManager: React.FC<CakeManagerProps> = ({ auctionId }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#7B1113] border-t-transparent" />
       </div>
     );
   }
@@ -254,7 +254,7 @@ export const CakeManager: React.FC<CakeManagerProps> = ({ auctionId }) => {
                 For {cake.beneficiary_kid}
               </p>
             )}
-            <p className="mt-2 text-sm font-medium text-indigo-600">
+            <p className="mt-2 text-sm font-medium text-[#7B1113]">
               Starting at {formatPrice(cake.starting_price)}
             </p>
 
@@ -320,7 +320,7 @@ export const CakeManager: React.FC<CakeManagerProps> = ({ auctionId }) => {
               value={form.description}
               onChange={handleChange}
               rows={3}
-              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-colors focus:border-[#9B1517] focus:outline-none focus:ring-2 focus:ring-[#7B1113]/20"
               placeholder="Tell bidders about this cake..."
             />
           </div>
@@ -381,7 +381,7 @@ export const CakeManager: React.FC<CakeManagerProps> = ({ auctionId }) => {
               type="file"
               accept="image/*"
               onChange={handleImageChange}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
+              className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-[#FBF5EB] file:px-4 file:py-2 file:text-sm file:font-medium file:text-[#5C0D0F] hover:file:bg-[#F5E6D0]"
             />
             {imagePreview && (
               <div className="mt-2 overflow-hidden rounded-lg border border-gray-200">

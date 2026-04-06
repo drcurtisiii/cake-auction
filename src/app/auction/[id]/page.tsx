@@ -169,7 +169,7 @@ export default function AuctionPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-indigo-50 to-white">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#FBF5EB] to-white">
         <div className="flex flex-col items-center gap-3">
           <LoadingSpinner size="lg" />
           <p className="text-sm text-gray-500">Loading auction...</p>
@@ -180,7 +180,7 @@ export default function AuctionPage() {
 
   if (error || !auction) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-indigo-50 to-white px-4">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#FBF5EB] to-white px-4">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-800">Oops!</h1>
           <p className="mt-2 text-gray-500">{error || 'Auction not found.'}</p>
@@ -191,7 +191,7 @@ export default function AuctionPage() {
 
   if (effectiveStatus === 'draft') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-indigo-50 to-white px-4">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#FBF5EB] to-white px-4">
         <div className="text-center">
           <span className="text-5xl" aria-hidden="true">🔒</span>
           <h1 className="mt-4 text-2xl font-bold text-gray-800">
@@ -208,7 +208,7 @@ export default function AuctionPage() {
   /* ── Main layout ───────────────────────────────────────── */
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 via-white to-amber-50">
+    <div className="min-h-screen bg-gradient-to-b from-[#FBF5EB] via-white to-amber-50">
       {/* ── Status banner ────────────────────────────────── */}
       {effectiveStatus === 'preview' && (
         <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-center">
@@ -244,7 +244,7 @@ export default function AuctionPage() {
             Auction Closed{' '}
             <a
               href={`/auction/${auctionId}/results`}
-              className="ml-1 text-indigo-600 underline hover:text-indigo-700"
+              className="ml-1 text-[#7B1113] underline hover:text-[#5C0D0F]"
             >
               View results
             </a>

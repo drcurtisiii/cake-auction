@@ -13,11 +13,11 @@ interface CakeCardProps {
 /** Random warm background for the placeholder when there is no image */
 const placeholderColors = [
   'from-rose-400 to-amber-300',
-  'from-indigo-400 to-pink-300',
+  'from-[#9B1517] to-[#D4A843]',
   'from-amber-400 to-rose-300',
-  'from-pink-400 to-indigo-300',
+  'from-[#C5A028] to-[#7B1113]',
   'from-fuchsia-400 to-amber-300',
-  'from-violet-400 to-rose-300',
+  'from-[#7B1113] to-[#C5A028]',
 ];
 
 function placeholderGradient(id: string) {
@@ -64,7 +64,7 @@ export const CakeCard: React.FC<CakeCardProps> = ({
 
         {/* Bid count pill */}
         {cake.bidCount !== undefined && cake.bidCount > 0 && (
-          <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 shadow">
+          <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-semibold text-[#5C0D0F] shadow">
             {cake.bidCount} bid{cake.bidCount === 1 ? '' : 's'}
           </span>
         )}
@@ -103,7 +103,7 @@ export const CakeCard: React.FC<CakeCardProps> = ({
                 ? 'Current Bid'
                 : 'Starting Price'}
           </p>
-          <p className="text-2xl font-extrabold text-indigo-600">
+          <p className="text-2xl font-extrabold text-[#7B1113]">
             ${currentPrice.toFixed(2)}
           </p>
         </div>
@@ -118,7 +118,7 @@ export const CakeCard: React.FC<CakeCardProps> = ({
                 onClick={() => onBidClick(cake.id, amount)}
                 className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
                   isLive
-                    ? 'bg-indigo-600 text-white hover:bg-indigo-700 active:bg-indigo-800'
+                    ? 'bg-[#7B1113] text-white hover:bg-[#5C0D0F] active:bg-[#4A0A0C]'
                     : 'cursor-not-allowed bg-gray-100 text-gray-400'
                 }`}
               >

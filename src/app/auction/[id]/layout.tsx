@@ -16,7 +16,7 @@ export default function AuctionPublicLayout({
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        background: 'linear-gradient(135deg, #fdf6f0 0%, #fce4ec 50%, #fff3e0 100%)',
+        background: 'linear-gradient(135deg, #FBF5EB 0%, #F5E6D0 50%, #FBF5EB 100%)',
       }}
     >
       {/* Header */}
@@ -35,7 +35,7 @@ export default function AuctionPublicLayout({
             fontSize: 'clamp(1.5rem, 4vw, 2rem)',
             fontWeight: 700,
             letterSpacing: '-0.01em',
-            color: '#4a2c2a',
+            color: '#7B1113',
             fontFamily:
               "'Georgia', 'Times New Roman', serif",
           }}
@@ -67,7 +67,7 @@ export default function AuctionPublicLayout({
           padding: '1.25rem 1rem',
           borderTop: '1px solid rgba(0,0,0,0.06)',
           background: 'rgba(255,255,255,0.5)',
-          color: '#8d6e63',
+          color: '#7B1113',
           fontSize: '0.85rem',
         }}
       >

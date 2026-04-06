@@ -118,7 +118,7 @@ export default function DashboardPage() {
                   </dl>
                 </div>
 
-                <span className="shrink-0 text-sm font-medium text-indigo-600">
+                <span className="shrink-0 text-sm font-medium text-[#7B1113]">
                   Edit &rarr;
                 </span>
               </div>

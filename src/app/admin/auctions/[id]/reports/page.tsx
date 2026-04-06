@@ -153,14 +153,14 @@ export default function ReportsPage() {
       </div>
 
       {/* Grand Total Hero Card */}
-      <div className="rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 px-8 py-10 text-center text-white shadow-lg">
-        <p className="text-sm font-medium uppercase tracking-wider text-indigo-200">
+      <div className="rounded-2xl bg-gradient-to-br from-[#7B1113] to-[#C5A028] px-8 py-10 text-center text-white shadow-lg">
+        <p className="text-sm font-medium uppercase tracking-wider text-[#F5E6D0]">
           Grand Total Raised
         </p>
         <p className="mt-2 text-5xl font-extrabold">
           ${data.grandTotal.toFixed(2)}
         </p>
-        <p className="mt-1 text-sm text-indigo-200">
+        <p className="mt-1 text-sm text-[#F5E6D0]">
           {data.winners.filter((w) => w.winning_bid).length} cakes sold
         </p>
       </div>
@@ -229,7 +229,7 @@ export default function ReportsPage() {
                       {w.winner_phone ? (
                         <a
                           href={`tel:${w.winner_phone}`}
-                          className="text-indigo-600 hover:underline"
+                          className="text-[#7B1113] hover:underline"
                         >
                           {w.winner_phone}
                         </a>
@@ -264,7 +264,7 @@ export default function ReportsPage() {
                                   {' '}
                                   <a
                                     href={`tel:${noShow.nextBidderPhone}`}
-                                    className="text-indigo-600 hover:underline"
+                                    className="text-[#7B1113] hover:underline"
                                   >
                                     {noShow.nextBidderPhone}
                                   </a>
@@ -408,7 +408,7 @@ export default function ReportsPage() {
                               <td className="whitespace-nowrap px-4 py-2 text-sm text-gray-700">
                                 <a
                                   href={`tel:${bid.bidder_phone}`}
-                                  className="text-indigo-600 hover:underline"
+                                  className="text-[#7B1113] hover:underline"
                                 >
                                   {bid.bidder_phone}
                                 </a>

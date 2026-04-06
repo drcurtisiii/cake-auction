@@ -161,7 +161,7 @@ export default function MonitorPage() {
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
                       <a
                         href={`tel:${bid.bidder_phone}`}
-                        className="text-indigo-600 hover:underline"
+                        className="text-[#7B1113] hover:underline"
                       >
                         {bid.bidder_phone}
                       </a>

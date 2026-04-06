@@ -33,7 +33,7 @@ export default function AuctionLayout({
       <nav className="mb-6 text-sm text-gray-500">
         <button
           onClick={() => router.push('/admin/dashboard')}
-          className="hover:text-indigo-600 transition-colors"
+          className="hover:text-[#7B1113] transition-colors"
         >
           Dashboard
         </button>
