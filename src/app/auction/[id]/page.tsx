@@ -208,7 +208,7 @@ export default function AuctionPage() {
   /* ── Main layout ───────────────────────────────────────── */
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F0F4F9] via-white to-blue-50">
+    <div className="min-h-screen" style={{ background: 'var(--public-page-bg)' }}>
       {/* ── Status banner ────────────────────────────────── */}
       {effectiveStatus === 'preview' && (
         <div className="border-b border-blue-200 bg-blue-50 px-4 py-3 text-center">
@@ -264,21 +264,54 @@ export default function AuctionPage() {
           </Badge>
         </div>
 
-        <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+        <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl" style={{ color: 'var(--public-text-strong)' }}>
           {auction.title}
         </h1>
 
         {auction.description && (
-          <p className="mx-auto mt-3 max-w-2xl text-base text-gray-600">
+          <p className="mx-auto mt-3 max-w-2xl text-base" style={{ color: 'var(--public-text-muted)' }}>
             {auction.description}
           </p>
+        )}
+
+        {auction.imgbb_url && (
+          <div className="mx-auto mt-6 max-w-4xl overflow-hidden rounded-3xl border shadow-sm" style={{ borderColor: 'var(--public-border)' }}>
+            <img
+              src={auction.imgbb_url}
+              alt={auction.title}
+              className="h-56 w-full object-cover sm:h-72"
+            />
+          </div>
+        )}
+
+        {effectiveStatus === 'preview' && (
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <a
+              href="/"
+              className="inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:opacity-90"
+              style={{
+                borderColor: 'var(--public-border)',
+                background: 'var(--public-panel)',
+                color: 'var(--public-text)',
+              }}
+            >
+              Return to Auctions List
+            </a>
+            <a
+              href={`/api/calendar/${auctionId}`}
+              className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90"
+              style={{ background: 'var(--public-accent)' }}
+            >
+              Add to Calendar
+            </a>
+          </div>
         )}
       </header>
 
       {/* ── Cake grid ────────────────────────────────────── */}
       <main className="mx-auto max-w-6xl px-4 pb-12 pt-6">
         {cakes.length === 0 ? (
-          <p className="py-12 text-center text-gray-400">
+          <p className="py-12 text-center" style={{ color: 'var(--public-text-muted)' }}>
             No cakes have been added to this auction yet.
           </p>
         ) : (
@@ -299,9 +332,13 @@ export default function AuctionPage() {
           <section className="mx-auto mt-12 max-w-3xl">
             <button
               onClick={() => setRulesOpen((o) => !o)}
-              className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white px-5 py-4 text-left shadow-sm transition-colors hover:bg-gray-50"
+              className="flex w-full items-center justify-between rounded-xl px-5 py-4 text-left shadow-sm transition-colors hover:opacity-95"
+              style={{
+                border: '1px solid var(--public-border)',
+                background: 'var(--public-panel)',
+              }}
             >
-              <span className="text-base font-semibold text-gray-800">
+              <span className="text-base font-semibold" style={{ color: 'var(--public-text-strong)' }}>
                 Auction Rules
               </span>
               <svg
@@ -323,8 +360,14 @@ export default function AuctionPage() {
             </button>
 
             {rulesOpen && (
-              <div className="mt-2 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
-                <ol className="list-decimal space-y-2 pl-5 text-sm text-gray-700">
+              <div
+                className="mt-2 rounded-xl px-5 py-4 shadow-sm"
+                style={{
+                  border: '1px solid var(--public-border)',
+                  background: 'var(--public-panel)',
+                }}
+              >
+                <ol className="list-decimal space-y-2 pl-5 text-sm" style={{ color: 'var(--public-text-muted)' }}>
                   {rules
                     .sort((a, b) => a.sort_order - b.sort_order)
                     .map((rule) => (

@@ -3,6 +3,7 @@ import { getDb } from '@/lib/db';
 import { auctionSchema } from '@/lib/validators';
 import { verifyAdmin } from '@/lib/admin-guard';
 import { seedDefaultRules } from '@/lib/default-rules';
+import { uploadImage } from '@/lib/imgbb';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +30,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const parsed = auctionSchema.safeParse(body);
+
+    let imgbbUrl = body.imgbb_url;
+    if (body.image) {
+      const result = await uploadImage(body.image);
+      imgbbUrl = result.url;
+    }
+
+    const parsed = auctionSchema.safeParse({ ...body, imgbb_url: imgbbUrl });
     if (!parsed.success) {
       return NextResponse.json(
         { error: 'Validation failed', details: parsed.error.flatten() },
@@ -41,9 +49,9 @@ export async function POST(request: NextRequest) {
     const sql = getDb();
 
     const rows = await sql`
-      INSERT INTO auctions (title, description, preview_at, live_at, close_at, status,
+      INSERT INTO auctions (title, description, imgbb_url, preview_at, live_at, close_at, status,
                             pickup_date, pickup_time, pickup_location, thank_you_msg)
-      VALUES (${data.title}, ${data.description ?? null}, ${data.preview_at ?? null},
+      VALUES (${data.title}, ${data.description ?? null}, ${data.imgbb_url ?? null}, ${data.preview_at ?? null},
               ${data.live_at ?? null}, ${data.close_at ?? null}, ${data.status},
               ${data.pickup_date ?? null}, ${data.pickup_time ?? null},
               ${data.pickup_location ?? null}, ${data.thank_you_msg ?? null})

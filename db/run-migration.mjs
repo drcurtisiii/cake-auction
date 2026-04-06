@@ -16,6 +16,7 @@ const statements = [
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     description TEXT,
+    imgbb_url TEXT,
     preview_at TIMESTAMPTZ,
     live_at TIMESTAMPTZ,
     close_at TIMESTAMPTZ,

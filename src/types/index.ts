@@ -11,6 +11,7 @@ export interface Auction {
   id: string;
   title: string;
   description?: string | null;
+  imgbb_url?: string | null;
   preview_at?: string | null;
   live_at?: string | null;
   close_at?: string | null;

@@ -26,6 +26,79 @@ export default function NewAuctionPage() {
     pickup_location: '',
     thank_you_msg: '',
   });
+  const [imageBase64, setImageBase64] = useState('');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  function processFile(file: File) {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setImagePreview(result);
+      setImageBase64(result.split(',')[1]);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) processFile(file);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) processFile(file);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+  }
+
+  async function handlePasteFromClipboard() {
+    try {
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        const imageType = item.types.find((t) => t.startsWith('image/'));
+        if (imageType) {
+          const blob = await item.getType(imageType);
+          processFile(new File([blob], 'auction-image.png', { type: imageType }));
+          return;
+        }
+      }
+      alert('No image found in clipboard');
+    } catch {
+      alert('Could not read clipboard. Try copying an image first.');
+    }
+  }
+
+  function handlePasteEvent(e: React.ClipboardEvent) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith('image/')) {
+        const file = items[i].getAsFile();
+        if (file) {
+          e.preventDefault();
+          processFile(file);
+          return;
+        }
+      }
+    }
+  }
+
+  function removeImage() {
+    setImagePreview(null);
+    setImageBase64('');
+  }
 
   function updateField(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -70,6 +143,7 @@ export default function NewAuctionPage() {
         pickup_location: form.pickup_location || undefined,
         description: form.description || undefined,
         thank_you_msg: form.thank_you_msg || undefined,
+        image: imageBase64 || undefined,
       };
 
       const res = await fetch('/api/auctions', {
@@ -143,6 +217,56 @@ export default function NewAuctionPage() {
                 placeholder="Optional description shown to bidders"
                 className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-colors focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
               />
+            </div>
+
+            <div className="w-full">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                Auction Image
+              </label>
+              {imagePreview ? (
+                <div className="relative mt-1 overflow-hidden rounded-lg border border-gray-200">
+                  <img src={imagePreview} alt="Auction preview" className="h-52 w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white transition-colors hover:bg-black/80"
+                    title="Remove image"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onPaste={handlePasteEvent}
+                  className={`mt-1 rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors ${
+                    isDragging
+                      ? 'border-[#E8602C] bg-[#E8602C]/5'
+                      : 'border-gray-300 bg-white'
+                  }`}
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="mx-auto mb-3 block text-sm text-gray-600"
+                  />
+                  <p className="text-sm font-medium text-gray-600">
+                    Drag and drop, select a file, or press Ctrl+V to paste
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handlePasteFromClipboard}
+                    className="mt-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-colors hover:bg-gray-50 hover:text-[#E8602C]"
+                  >
+                    Paste from Clipboard
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </section>

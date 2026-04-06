@@ -43,7 +43,13 @@ export const CakeCard: React.FC<CakeCardProps> = ({
   const isClosed = auctionStatus === 'closed';
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-lg">
+    <div
+      className="group flex flex-col overflow-hidden rounded-2xl shadow-sm transition-shadow hover:shadow-lg"
+      style={{
+        border: '1px solid var(--public-border)',
+        background: 'var(--public-panel)',
+      }}
+    >
       {/* ── Image / placeholder ─────────────────────────── */}
       <div className="relative h-52 w-full overflow-hidden">
         {cake.imgbb_url ? (
@@ -64,7 +70,13 @@ export const CakeCard: React.FC<CakeCardProps> = ({
 
         {/* Bid count pill */}
         {cake.bidCount !== undefined && cake.bidCount > 0 && (
-          <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-semibold text-[#C74E1F] shadow">
+          <span
+            className="absolute right-2 top-2 rounded-full px-2.5 py-0.5 text-xs font-semibold shadow"
+            style={{
+              background: 'var(--public-panel-soft)',
+              color: 'var(--public-accent-strong)',
+            }}
+          >
             {cake.bidCount} bid{cake.bidCount === 1 ? '' : 's'}
           </span>
         )}
@@ -72,18 +84,20 @@ export const CakeCard: React.FC<CakeCardProps> = ({
 
       {/* ── Details ─────────────────────────────────────── */}
       <div className="flex flex-1 flex-col gap-2 p-4">
-        <h3 className="text-lg font-bold text-gray-900">{cake.name}</h3>
+        <h3 className="text-lg font-bold" style={{ color: 'var(--public-text-strong)' }}>
+          {cake.name}
+        </h3>
 
         {cake.flavor && (
-          <p className="text-sm text-gray-500">
-            <span className="font-medium text-gray-600">Flavor:</span>{' '}
+          <p className="text-sm" style={{ color: 'var(--public-text-muted)' }}>
+            <span className="font-medium" style={{ color: 'var(--public-text)' }}>Flavor:</span>{' '}
             {cake.flavor}
           </p>
         )}
 
         {cake.donor_name && (
-          <p className="text-sm text-gray-500">
-            <span className="font-medium text-gray-600">Donated by:</span>{' '}
+          <p className="text-sm" style={{ color: 'var(--public-text-muted)' }}>
+            <span className="font-medium" style={{ color: 'var(--public-text)' }}>Donated by:</span>{' '}
             {cake.donor_name}
           </p>
         )}
@@ -96,14 +110,14 @@ export const CakeCard: React.FC<CakeCardProps> = ({
 
         {/* Current price */}
         <div className="mt-auto pt-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--public-text-muted)' }}>
             {isClosed
               ? 'Final Bid'
               : cake.currentBid
                 ? 'Current Bid'
                 : 'Starting Price'}
           </p>
-          <p className="text-2xl font-extrabold text-[#E8602C]">
+          <p className="text-2xl font-extrabold" style={{ color: 'var(--public-accent)' }}>
             ${currentPrice.toFixed(2)}
           </p>
         </div>

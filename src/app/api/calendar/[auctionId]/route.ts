@@ -23,35 +23,33 @@ export async function GET(
 
     const auction = rows[0] as Auction;
 
-    // Build the pickup date/time. If no pickup info is set, return 404.
-    if (!auction.pickup_date) {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://cake-auction-app.netlify.app';
+    const eventStart = auction.live_at || auction.preview_at;
+    if (!eventStart) {
       return NextResponse.json(
-        { error: 'No pickup date set for this auction' },
+        { error: 'No auction event time is set for this auction' },
         { status: 404 }
       );
     }
 
-    // Parse pickup_date and pickup_time into start/end ISO strings.
-    // pickup_date is expected as YYYY-MM-DD, pickup_time as HH:MM or similar.
-    const pickupTime = auction.pickup_time || '12:00';
-    const startISO = `${auction.pickup_date}T${pickupTime}:00`;
-    // Default the event to 1 hour duration
-    const startDate = new Date(startISO);
-    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+    const startDate = new Date(eventStart);
+    const endDate = auction.close_at
+      ? new Date(auction.close_at)
+      : new Date(startDate.getTime() + 60 * 60 * 1000);
 
     const icsContent = generateICS({
-      title: `Cake Pickup - ${auction.title}`,
-      description: `Pick up your winning cake(s) from the "${auction.title}" auction!`,
+      title: `Cake Auction - ${auction.title}`,
+      description: `Join the "${auction.title}" cake auction.\n\nView auction: ${siteUrl}/auction/${auctionId}`,
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
-      location: auction.pickup_location || 'See auction details',
+      location: siteUrl,
     });
 
     return new NextResponse(icsContent, {
       status: 200,
       headers: {
         'Content-Type': 'text/calendar; charset=utf-8',
-        'Content-Disposition': 'attachment; filename="pickup.ics"',
+        'Content-Disposition': 'attachment; filename="cake-auction.ics"',
       },
     });
   } catch (error) {

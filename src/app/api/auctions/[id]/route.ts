@@ -3,6 +3,7 @@ import { getDb } from '@/lib/db';
 import { auctionSchema } from '@/lib/validators';
 import { verifyAdmin } from '@/lib/admin-guard';
 import { broadcastAuctionStateChange } from '@/lib/pusher-server';
+import { uploadImage } from '@/lib/imgbb';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,7 +44,14 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const parsed = auctionSchema.partial().safeParse(body);
+
+    let imgbbUrl = body.imgbb_url;
+    if (body.image) {
+      const result = await uploadImage(body.image);
+      imgbbUrl = result.url;
+    }
+
+    const parsed = auctionSchema.partial().safeParse({ ...body, imgbb_url: imgbbUrl });
     if (!parsed.success) {
       return NextResponse.json(
         { error: 'Validation failed', details: parsed.error.flatten() },
@@ -64,6 +72,7 @@ export async function PUT(
     const merged = {
       title: data.title ?? existing[0].title,
       description: 'description' in data ? (data.description ?? null) : existing[0].description,
+      imgbb_url: 'imgbb_url' in data ? (data.imgbb_url ?? null) : existing[0].imgbb_url,
       preview_at: 'preview_at' in data ? (data.preview_at ?? null) : existing[0].preview_at,
       live_at: 'live_at' in data ? (data.live_at ?? null) : existing[0].live_at,
       close_at: 'close_at' in data ? (data.close_at ?? null) : existing[0].close_at,
@@ -78,6 +87,7 @@ export async function PUT(
       UPDATE auctions
       SET title = ${merged.title},
           description = ${merged.description},
+          imgbb_url = ${merged.imgbb_url},
           preview_at = ${merged.preview_at},
           live_at = ${merged.live_at},
           close_at = ${merged.close_at},

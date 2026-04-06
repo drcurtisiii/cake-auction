@@ -1,0 +1,2 @@
+ALTER TABLE auctions
+ADD COLUMN IF NOT EXISTS imgbb_url TEXT;

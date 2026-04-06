@@ -23,11 +23,12 @@ interface ResultsData {
 /* ── Styles ──────────────────────────────────────────── */
 
 const card: React.CSSProperties = {
-  background: '#fff',
+  background: 'var(--public-panel)',
   borderRadius: '0.75rem',
   padding: '1.25rem',
   marginBottom: '1rem',
   boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+  border: '1px solid var(--public-border)',
 };
 
 const badge: React.CSSProperties = {
@@ -164,6 +165,22 @@ export default function ResultsPage() {
 
   return (
     <div>
+      <div style={{ marginBottom: '1rem' }}>
+        <a
+          href="/"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.35rem',
+            color: 'var(--public-accent)',
+            textDecoration: 'none',
+            fontWeight: 600,
+          }}
+        >
+          ← Return to Auctions
+        </a>
+      </div>
+
       {/* Confetti-like accent dots */}
       <div
         style={{
@@ -189,7 +206,7 @@ export default function ResultsPage() {
           style={{
             marginTop: '1.25rem',
             fontSize: 'clamp(1.3rem, 4vw, 1.75rem)',
-            color: '#1B3C6D',
+            color: 'var(--public-text)',
             fontWeight: 700,
           }}
         >
@@ -202,11 +219,11 @@ export default function ResultsPage() {
         style={{
           ...card,
           textAlign: 'center',
-          background: 'linear-gradient(135deg, #F0F4F9, #E8EEF6)',
-          border: '2px solid #1B3C6D',
+          background: 'var(--public-panel-soft)',
+          border: '2px solid var(--public-text)',
         }}
       >
-        <p style={{ margin: 0, color: '#1B3C6D', fontSize: '0.9rem' }}>
+        <p style={{ margin: 0, color: 'var(--public-text)', fontSize: '0.9rem' }}>
           Grand Total Raised
         </p>
         <p
@@ -224,7 +241,7 @@ export default function ResultsPage() {
       {/* Per-Cake Results */}
       <h3
         style={{
-          color: '#1B3C6D',
+          color: 'var(--public-text)',
           fontSize: '1.1rem',
           margin: '1.5rem 0 0.75rem',
         }}
@@ -248,13 +265,13 @@ export default function ResultsPage() {
                 style={{
                   margin: 0,
                   fontWeight: 600,
-                  color: '#1B3C6D',
+                  color: 'var(--public-text)',
                   fontSize: '1.05rem',
                 }}
               >
                 {cr.cakeName}
               </p>
-              <p style={{ margin: '0.2rem 0 0', color: '#1B3C6D', fontSize: '0.9rem' }}>
+              <p style={{ margin: '0.2rem 0 0', color: 'var(--public-text)', fontSize: '0.9rem' }}>
                 {cr.winnerName !== 'No bids'
                   ? `Won by ${cr.winnerName}`
                   : 'No bids received'}
@@ -264,7 +281,7 @@ export default function ResultsPage() {
                   style={{
                     margin: '0.3rem 0 0',
                     fontSize: '0.8rem',
-                    color: '#1B3C6D',
+                    color: 'var(--public-text-muted)',
                     fontStyle: 'italic',
                   }}
                 >
@@ -294,7 +311,7 @@ export default function ResultsPage() {
         <>
           <h3
             style={{
-              color: '#1B3C6D',
+              color: 'var(--public-text)',
               fontSize: '1.1rem',
               margin: '1.5rem 0 0.75rem',
             }}
@@ -313,7 +330,7 @@ export default function ResultsPage() {
                   alignItems: 'center',
                 }}
               >
-                <span style={{ fontWeight: 600, color: '#1B3C6D' }}>{kid}</span>
+                <span style={{ fontWeight: 600, color: 'var(--public-text)' }}>{kid}</span>
                 <span style={badge}>
                   ${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </span>
@@ -328,29 +345,29 @@ export default function ResultsPage() {
           style={{
             ...card,
             marginTop: '1.5rem',
-            background: 'linear-gradient(135deg, #F0F4F9, #E8EEF6)',
-            border: '2px solid #1B3C6D',
+            background: 'var(--public-panel-soft)',
+            border: '2px solid var(--public-text)',
           }}
         >
           <h3
             style={{
               margin: '0 0 0.75rem',
-              color: '#1B3C6D',
+              color: 'var(--public-text)',
               fontSize: '1.1rem',
             }}
           >
             Pickup Information
           </h3>
-          <p style={{ margin: '0.25rem 0', color: '#37474f' }}>
+          <p style={{ margin: '0.25rem 0', color: 'var(--public-text-muted)' }}>
             <strong>Date:</strong> {auction.pickup_date}
           </p>
           {auction.pickup_time && (
-            <p style={{ margin: '0.25rem 0', color: '#37474f' }}>
+            <p style={{ margin: '0.25rem 0', color: 'var(--public-text-muted)' }}>
               <strong>Time:</strong> {auction.pickup_time}
             </p>
           )}
           {auction.pickup_location && (
-            <p style={{ margin: '0.25rem 0', color: '#37474f' }}>
+            <p style={{ margin: '0.25rem 0', color: 'var(--public-text-muted)' }}>
               <strong>Location:</strong> {auction.pickup_location}
             </p>
           )}
@@ -380,15 +397,15 @@ export default function ResultsPage() {
             ...card,
             marginTop: '1rem',
             textAlign: 'center',
-            background: 'linear-gradient(135deg, #E8EEF6, #F0F4F9)',
-            border: '2px solid #1B3C6D',
+            background: 'var(--public-panel-soft)',
+            border: '2px solid var(--public-text)',
           }}
         >
           <p
             style={{
               margin: 0,
               fontSize: '1.1rem',
-              color: '#1B3C6D',
+              color: 'var(--public-text)',
               fontStyle: 'italic',
               lineHeight: 1.6,
             }}

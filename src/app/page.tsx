@@ -28,12 +28,30 @@ function AuctionCard({
   return (
     <Link
       href={href}
-      className="block rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+      className="block overflow-hidden rounded-2xl p-0 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+      style={{
+        background: 'var(--public-panel)',
+        border: '1px solid var(--public-border)',
+      }}
     >
+      {auction.imgbb_url && (
+        <div className="h-44 w-full overflow-hidden">
+          <img
+            src={auction.imgbb_url}
+            alt={auction.title}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      )}
+
+      <div className="p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
-            <h2 className="truncate text-xl font-semibold text-[#1B3C6D]">
+            <h2
+              className="truncate text-xl font-semibold"
+              style={{ color: 'var(--public-text)' }}
+            >
               {auction.title}
             </h2>
             <Badge variant={auction.effectiveStatus}>
@@ -44,28 +62,46 @@ function AuctionCard({
           </div>
 
           {auction.description && (
-            <p className="mt-2 text-sm text-gray-600">{auction.description}</p>
+            <p
+              className="mt-2 text-sm"
+              style={{ color: 'var(--public-text-muted)' }}
+            >
+              {auction.description}
+            </p>
           )}
 
-          <dl className="mt-4 grid grid-cols-1 gap-2 text-sm text-gray-500 sm:grid-cols-3">
+          <dl
+            className="mt-4 grid grid-cols-1 gap-2 text-sm sm:grid-cols-3"
+            style={{ color: 'var(--public-text-muted)' }}
+          >
             <div>
-              <dt className="font-medium text-gray-700">Preview</dt>
+              <dt className="font-medium" style={{ color: 'var(--public-text)' }}>
+                Preview
+              </dt>
               <dd>{formatDate(auction.preview_at)}</dd>
             </div>
             <div>
-              <dt className="font-medium text-gray-700">Live</dt>
+              <dt className="font-medium" style={{ color: 'var(--public-text)' }}>
+                Live
+              </dt>
               <dd>{formatDate(auction.live_at)}</dd>
             </div>
             <div>
-              <dt className="font-medium text-gray-700">Close</dt>
+              <dt className="font-medium" style={{ color: 'var(--public-text)' }}>
+                Close
+              </dt>
               <dd>{formatDate(auction.close_at)}</dd>
             </div>
           </dl>
         </div>
 
-        <span className="shrink-0 text-sm font-semibold text-[#E8602C]">
+        <span
+          className="shrink-0 text-sm font-semibold"
+          style={{ color: 'var(--public-accent)' }}
+        >
           {cta}
         </span>
+      </div>
       </div>
     </Link>
   );
@@ -110,25 +146,31 @@ export default async function Home() {
     pastAuctions.length > 0;
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#fff7ed,_#f8fafc_45%,_#eff6ff)] px-4 py-10 sm:px-6">
+    <main className="min-h-screen px-4 py-10 sm:px-6" style={{ background: 'var(--public-page-bg)' }}>
       <div className="mx-auto max-w-5xl">
         <div className="mb-10 text-center">
-          <div className="mb-4 text-5xl">Cake Auction</div>
-          <h1 className="text-4xl font-bold tracking-tight text-[#1B3C6D] sm:text-5xl">
+          <div className="mb-4 text-5xl" style={{ color: 'var(--public-text)' }}>Cake Auction</div>
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl" style={{ color: 'var(--public-text)' }}>
             School Cake Auctions
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-base text-gray-600 sm:text-lg">
+          <p className="mx-auto mt-4 max-w-2xl text-base sm:text-lg" style={{ color: 'var(--public-text-muted)' }}>
             Preview upcoming auctions, bid when they go live, and browse past
             auction results.
           </p>
         </div>
 
         {!hasAuctions && (
-          <div className="rounded-3xl border border-dashed border-gray-300 bg-white/80 px-8 py-16 text-center shadow-sm">
-            <p className="text-lg font-medium text-gray-700">
+          <div
+            className="rounded-3xl border border-dashed px-8 py-16 text-center shadow-sm"
+            style={{
+              borderColor: 'var(--public-border)',
+              background: 'var(--public-panel-soft)',
+            }}
+          >
+            <p className="text-lg font-medium" style={{ color: 'var(--public-text)' }}>
               Bookmark this page.
             </p>
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-2 text-sm" style={{ color: 'var(--public-text-muted)' }}>
               Preview, live, and past auctions will show up here as they become
               available.
             </p>
@@ -138,7 +180,7 @@ export default async function Home() {
         {liveAuctions.length > 0 && (
           <section className="mb-10">
             <div className="mb-4 flex items-center gap-3">
-              <h2 className="text-2xl font-semibold text-gray-900">Live Auctions</h2>
+              <h2 className="text-2xl font-semibold" style={{ color: 'var(--public-text-strong)' }}>Live Auctions</h2>
               <Badge variant="live">happening now</Badge>
             </div>
             <div className="space-y-4">
@@ -157,7 +199,7 @@ export default async function Home() {
         {previewAuctions.length > 0 && (
           <section className="mb-10">
             <div className="mb-4 flex items-center gap-3">
-              <h2 className="text-2xl font-semibold text-gray-900">Preview Auctions</h2>
+              <h2 className="text-2xl font-semibold" style={{ color: 'var(--public-text-strong)' }}>Preview Auctions</h2>
               <Badge variant="preview">coming soon</Badge>
             </div>
             <div className="space-y-4">
@@ -176,7 +218,7 @@ export default async function Home() {
         {pastAuctions.length > 0 && (
           <section>
             <div className="mb-4 flex items-center gap-3">
-              <h2 className="text-2xl font-semibold text-gray-900">Past Auctions</h2>
+              <h2 className="text-2xl font-semibold" style={{ color: 'var(--public-text-strong)' }}>Past Auctions</h2>
               <Badge variant="closed">results</Badge>
             </div>
             <div className="space-y-4">
@@ -193,12 +235,6 @@ export default async function Home() {
         )}
       </div>
 
-      <Link
-        href="/admin"
-        aria-label="Open admin"
-        title="Admin"
-        className="fixed bottom-5 right-5 h-4 w-4 rounded-full bg-[#1B3C6D]/80 shadow-[0_0_0_6px_rgba(255,255,255,0.75)] transition-all hover:scale-110 hover:bg-[#E8602C]"
-      />
     </main>
   );
 }
