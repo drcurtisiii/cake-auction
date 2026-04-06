@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Cake } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -103,10 +103,18 @@ export const CakeManager: React.FC<CakeManagerProps> = ({ auctionId }) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
+  const processFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Image must be less than 10MB');
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result as string;
@@ -114,6 +122,68 @@ export const CakeManager: React.FC<CakeManagerProps> = ({ auctionId }) => {
       setImagePreview(base64);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processFile(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handlePasteFromClipboard = async () => {
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      for (const item of clipboardItems) {
+        const imageType = item.types.find((t) => t.startsWith('image/'));
+        if (imageType) {
+          const blob = await item.getType(imageType);
+          const file = new File([blob], 'pasted-image.png', { type: imageType });
+          processFile(file);
+          return;
+        }
+      }
+      setError('No image found on clipboard');
+    } catch {
+      setError('Could not read clipboard. Try Ctrl+V in the drop zone instead.');
+    }
+  };
+
+  const handlePasteEvent = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) processFile(file);
+        return;
+      }
+    }
+  };
+
+  const removeImage = () => {
+    setForm((prev) => ({ ...prev, image_base64: '' }));
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -136,7 +206,7 @@ export const CakeManager: React.FC<CakeManagerProps> = ({ auctionId }) => {
       starting_price: parseFloat(form.starting_price) || 0,
       min_increment: parseFloat(form.min_increment) || 5,
       max_increment: parseFloat(form.max_increment) || 25,
-      image_base64: form.image_base64 || undefined,
+      image: form.image_base64 || undefined,
     };
 
     try {
@@ -372,26 +442,76 @@ export const CakeManager: React.FC<CakeManagerProps> = ({ auctionId }) => {
             />
           </div>
 
-          {/* Image upload */}
+          {/* Image upload - drag/drop + paste */}
           <div className="w-full">
             <label className="mb-1.5 block text-sm font-medium text-gray-700">
               Cake Image
             </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-[#F0F4F9] file:px-4 file:py-2 file:text-sm file:font-medium file:text-[#C74E1F] hover:file:bg-[#E8EEF6]"
-            />
-            {imagePreview && (
-              <div className="mt-2 overflow-hidden rounded-lg border border-gray-200">
+
+            {imagePreview ? (
+              <div className="relative mt-1 overflow-hidden rounded-lg border border-gray-200">
                 <img
                   src={imagePreview}
                   alt="Preview"
-                  className="h-40 w-full object-cover"
+                  className="h-44 w-full object-cover"
                 />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white transition-colors hover:bg-black/80"
+                  title="Remove image"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              <div
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onPaste={handlePasteEvent}
+                onClick={() => fileInputRef.current?.click()}
+                tabIndex={0}
+                className={`mt-1 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors ${
+                  isDragging
+                    ? 'border-[#E8602C] bg-[#E8602C]/5'
+                    : 'border-gray-300 hover:border-[#E8602C]/50 hover:bg-gray-50'
+                }`}
+              >
+                <svg className="mb-2 h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+                </svg>
+                <p className="text-sm font-medium text-gray-600">
+                  {isDragging ? 'Drop image here' : 'Drag & drop image here'}
+                </p>
+                <p className="mt-1 text-xs text-gray-400">or click to browse</p>
+
+                {/* Paste button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePasteFromClipboard();
+                  }}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-colors hover:bg-gray-50 hover:text-[#E8602C]"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
+                  </svg>
+                  Paste from Clipboard
+                </button>
               </div>
             )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+            />
           </div>
 
           {/* Submit */}
