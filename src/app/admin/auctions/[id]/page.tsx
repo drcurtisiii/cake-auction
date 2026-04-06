@@ -452,13 +452,7 @@ function DetailsTab({
 // ─── Cakes Tab ──────────────────────────────────────────
 
 function CakesTab({ auctionId }: { auctionId: string }) {
-  const [cakes, setCakes] = useState<Cake[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showAdd, setShowAdd] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-
-  const [newCake, setNewCake] = useState({
+  const EMPTY_CAKE_FORM = {
     name: '',
     flavor: '',
     description: '',
@@ -467,7 +461,17 @@ function CakesTab({ auctionId }: { auctionId: string }) {
     starting_price: '0',
     min_increment: '5',
     max_increment: '25',
-  });
+  };
+
+  const [cakes, setCakes] = useState<Cake[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [editingCake, setEditingCake] = useState<Cake | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [deletingCakeId, setDeletingCakeId] = useState<string | null>(null);
+  const [error, setError] = useState('');
+
+  const [cakeForm, setCakeForm] = useState(EMPTY_CAKE_FORM);
   const [imageBase64, setImageBase64] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -544,6 +548,41 @@ function CakesTab({ auctionId }: { auctionId: string }) {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
+  function resetCakeForm() {
+    setCakeForm(EMPTY_CAKE_FORM);
+    setEditingCake(null);
+    setError('');
+    removeImage();
+  }
+
+  function openAddModal() {
+    resetCakeForm();
+    setShowAdd(true);
+  }
+
+  function openEditModal(cake: Cake) {
+    setEditingCake(cake);
+    setCakeForm({
+      name: cake.name,
+      flavor: cake.flavor || '',
+      description: cake.description || '',
+      donor_name: cake.donor_name || '',
+      beneficiary_kid: cake.beneficiary_kid || '',
+      starting_price: String(cake.starting_price),
+      min_increment: String(cake.min_increment),
+      max_increment: String(cake.max_increment),
+    });
+    setImageBase64('');
+    setImagePreview(cake.imgbb_url || null);
+    setError('');
+    setShowAdd(true);
+  }
+
+  function closeCakeModal() {
+    setShowAdd(false);
+    resetCakeForm();
+  }
+
   const fetchCakes = useCallback(async () => {
     try {
       const res = await fetch(`/api/cakes?auctionId=${auctionId}`);
@@ -561,49 +600,79 @@ function CakesTab({ auctionId }: { auctionId: string }) {
     fetchCakes();
   }, [fetchCakes]);
 
-  async function handleAddCake(e: React.FormEvent) {
+  async function handleSaveCake(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setSaving(true);
     try {
-      const res = await fetch('/api/cakes', {
-        method: 'POST',
+      const isEditing = Boolean(editingCake);
+      const res = await fetch(
+        isEditing ? `/api/cakes/${editingCake!.id}` : '/api/cakes',
+        {
+          method: isEditing ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            auction_id: auctionId,
+            name: cakeForm.name,
+            flavor: cakeForm.flavor || undefined,
+            description: cakeForm.description || undefined,
+            donor_name: cakeForm.donor_name || undefined,
+            beneficiary_kid: cakeForm.beneficiary_kid || undefined,
+            starting_price: Number(cakeForm.starting_price) || 0,
+            min_increment: Number(cakeForm.min_increment) || 5,
+            max_increment: Number(cakeForm.max_increment) || 25,
+            sort_order: editingCake?.sort_order ?? cakes.length,
+            imgbb_url: imageBase64 ? undefined : editingCake?.imgbb_url,
+            image: imageBase64 || undefined,
+          }),
+        },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(
+          data?.error || (isEditing ? 'Failed to update cake' : 'Failed to add cake'),
+        );
+      }
+      closeCakeModal();
+      fetchCakes();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : editingCake
+            ? 'Failed to update cake'
+            : 'Failed to add cake',
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeleteCake(cake: Cake) {
+    const confirmed = window.confirm(
+      `Delete "${cake.name}"? This cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    setError('');
+    setDeletingCakeId(cake.id);
+    try {
+      const res = await fetch(`/api/cakes/${cake.id}`, {
+        method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          auction_id: auctionId,
-          name: newCake.name,
-          flavor: newCake.flavor || undefined,
-          description: newCake.description || undefined,
-          donor_name: newCake.donor_name || undefined,
-          beneficiary_kid: newCake.beneficiary_kid || undefined,
-          starting_price: Number(newCake.starting_price) || 0,
-          min_increment: Number(newCake.min_increment) || 5,
-          max_increment: Number(newCake.max_increment) || 25,
-          sort_order: cakes.length,
-          image: imageBase64 || undefined,
-        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        throw new Error(data?.error || 'Failed to add cake');
+        throw new Error(data?.error || 'Failed to delete cake');
       }
-      setNewCake({
-        name: '',
-        flavor: '',
-        description: '',
-        donor_name: '',
-        beneficiary_kid: '',
-        starting_price: '0',
-        min_increment: '5',
-        max_increment: '25',
-      });
-      removeImage();
-      setShowAdd(false);
-      fetchCakes();
+      if (editingCake?.id === cake.id) {
+        closeCakeModal();
+      }
+      await fetchCakes();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add cake');
+      setError(err instanceof Error ? err.message : 'Failed to delete cake');
     } finally {
-      setSaving(false);
+      setDeletingCakeId(null);
     }
   }
 
@@ -621,10 +690,16 @@ function CakesTab({ auctionId }: { auctionId: string }) {
         <h2 className="text-lg font-semibold text-gray-800">
           Cakes ({cakes.length})
         </h2>
-        <Button size="sm" onClick={() => setShowAdd(true)}>
+        <Button size="sm" onClick={openAddModal}>
           + Add Cake
         </Button>
       </div>
+
+      {error && (
+        <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       {cakes.length === 0 && !showAdd ? (
         <div className="rounded-xl border-2 border-dashed border-gray-300 px-6 py-12 text-center">
@@ -635,16 +710,46 @@ function CakesTab({ auctionId }: { auctionId: string }) {
           {cakes.map((cake) => (
             <div
               key={cake.id}
-              className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm"
+              className="flex items-center gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm"
             >
-              <div className="min-w-0">
-                <p className="font-medium text-gray-900 truncate">{cake.name}</p>
+              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                {cake.imgbb_url ? (
+                  <img
+                    src={cake.imgbb_url}
+                    alt={cake.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-2xl">
+                    Cake
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium text-gray-900">{cake.name}</p>
                 <p className="text-sm text-gray-500">
                   {cake.flavor && <span>{cake.flavor}</span>}
                   {cake.donor_name && (
                     <span className="ml-2">by {cake.donor_name}</span>
                   )}
                 </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => openEditModal(cake)}
+                >
+                  Edit
+                </Button>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  loading={deletingCakeId === cake.id}
+                  onClick={() => handleDeleteCake(cake)}
+                >
+                  Delete
+                </Button>
               </div>
               <span className="shrink-0 text-sm font-medium text-gray-600">
                 ${cake.starting_price.toFixed(2)}
@@ -654,43 +759,64 @@ function CakesTab({ auctionId }: { auctionId: string }) {
         </div>
       )}
 
-      {/* Add Cake Modal */}
-      <Modal isOpen={showAdd} onClose={() => setShowAdd(false)} title="Add Cake">
-        {error && (
-          <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </div>
-        )}
-        <form onSubmit={handleAddCake} className="space-y-4">
+      {/* Add/Edit Cake Modal */}
+      <Modal
+        isOpen={showAdd}
+        onClose={closeCakeModal}
+        title={editingCake ? 'Edit Cake' : 'Add Cake'}
+      >
+        <form onSubmit={handleSaveCake} className="space-y-4">
+          {error && (
+            <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </div>
+          )}
           <Input
             label="Cake Name"
             required
-            value={newCake.name}
+            value={cakeForm.name}
             onChange={(e) =>
-              setNewCake((prev) => ({ ...prev, name: e.target.value }))
+              setCakeForm((prev) => ({ ...prev, name: e.target.value }))
             }
           />
           <Input
             label="Flavor"
-            value={newCake.flavor}
+            value={cakeForm.flavor}
             onChange={(e) =>
-              setNewCake((prev) => ({ ...prev, flavor: e.target.value }))
+              setCakeForm((prev) => ({ ...prev, flavor: e.target.value }))
             }
           />
           <Input
             label="Donor Name"
-            value={newCake.donor_name}
+            value={cakeForm.donor_name}
             onChange={(e) =>
-              setNewCake((prev) => ({ ...prev, donor_name: e.target.value }))
+              setCakeForm((prev) => ({ ...prev, donor_name: e.target.value }))
             }
           />
           <Input
             label="Beneficiary Kid"
-            value={newCake.beneficiary_kid}
+            value={cakeForm.beneficiary_kid}
             onChange={(e) =>
-              setNewCake((prev) => ({ ...prev, beneficiary_kid: e.target.value }))
+              setCakeForm((prev) => ({ ...prev, beneficiary_kid: e.target.value }))
             }
           />
+          <div className="w-full">
+            <label
+              htmlFor="cake-description"
+              className="mb-1.5 block text-sm font-medium text-gray-700"
+            >
+              Description
+            </label>
+            <textarea
+              id="cake-description"
+              rows={3}
+              value={cakeForm.description}
+              onChange={(e) =>
+                setCakeForm((prev) => ({ ...prev, description: e.target.value }))
+              }
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-colors focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
+            />
+          </div>
           {/* Image upload - drag/drop + paste */}
           <div className="w-full">
             <label className="mb-1.5 block text-sm font-medium text-gray-700">
@@ -761,9 +887,9 @@ function CakesTab({ auctionId }: { auctionId: string }) {
               type="number"
               min="0"
               step="0.01"
-              value={newCake.starting_price}
+              value={cakeForm.starting_price}
               onChange={(e) =>
-                setNewCake((prev) => ({ ...prev, starting_price: e.target.value }))
+                setCakeForm((prev) => ({ ...prev, starting_price: e.target.value }))
               }
             />
             <Input
@@ -771,9 +897,9 @@ function CakesTab({ auctionId }: { auctionId: string }) {
               type="number"
               min="0"
               step="0.01"
-              value={newCake.min_increment}
+              value={cakeForm.min_increment}
               onChange={(e) =>
-                setNewCake((prev) => ({ ...prev, min_increment: e.target.value }))
+                setCakeForm((prev) => ({ ...prev, min_increment: e.target.value }))
               }
             />
             <Input
@@ -781,9 +907,9 @@ function CakesTab({ auctionId }: { auctionId: string }) {
               type="number"
               min="0"
               step="0.01"
-              value={newCake.max_increment}
+              value={cakeForm.max_increment}
               onChange={(e) =>
-                setNewCake((prev) => ({ ...prev, max_increment: e.target.value }))
+                setCakeForm((prev) => ({ ...prev, max_increment: e.target.value }))
               }
             />
           </div>
@@ -791,12 +917,12 @@ function CakesTab({ auctionId }: { auctionId: string }) {
             <Button
               type="button"
               variant="secondary"
-              onClick={() => setShowAdd(false)}
+              onClick={closeCakeModal}
             >
               Cancel
             </Button>
             <Button type="submit" loading={saving}>
-              Add Cake
+              {editingCake ? 'Save Changes' : 'Add Cake'}
             </Button>
           </div>
         </form>
