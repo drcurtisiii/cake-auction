@@ -284,19 +284,19 @@ export default function AuctionPage() {
           </div>
         )}
 
-        {effectiveStatus === 'preview' && (
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <a
-              href="/"
-              className="inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:opacity-90"
-              style={{
-                borderColor: 'var(--public-border)',
-                background: 'var(--public-panel)',
-                color: 'var(--public-text)',
-              }}
-            >
-              Return to Auctions List
-            </a>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <a
+            href="/"
+            className="inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:opacity-90"
+            style={{
+              borderColor: 'var(--public-border)',
+              background: 'var(--public-panel)',
+              color: 'var(--public-text)',
+            }}
+          >
+            Return to Auctions List
+          </a>
+          {effectiveStatus === 'preview' && (
             <a
               href={`/api/calendar/${auctionId}`}
               className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90"
@@ -304,8 +304,8 @@ export default function AuctionPage() {
             >
               Add to Calendar
             </a>
-          </div>
-        )}
+          )}
+        </div>
       </header>
 
       {/* ── Cake grid ────────────────────────────────────── */}
