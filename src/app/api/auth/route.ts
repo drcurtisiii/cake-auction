@@ -27,12 +27,16 @@ export async function POST(request: NextRequest) {
     const sql = getDb();
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
+    // Remove any existing sessions for this device
+    await sql`
+      DELETE FROM admin_sessions
+      WHERE device_token = ${deviceToken}
+    `;
+
+    // Create new session
     await sql`
       INSERT INTO admin_sessions (device_token, expires_at)
       VALUES (${deviceToken}, ${expiresAt.toISOString()})
-      ON CONFLICT (device_token) DO UPDATE
-        SET expires_at = ${expiresAt.toISOString()},
-            authenticated_at = NOW()
     `;
 
     // Set HTTP-only cookie

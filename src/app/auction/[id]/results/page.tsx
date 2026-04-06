@@ -133,13 +133,13 @@ export default function ResultsPage() {
             width: '2.5rem',
             height: '2.5rem',
             border: '3px solid #e0e0e0',
-            borderTopColor: '#C5A028',
+            borderTopColor: '#1B3C6D',
             borderRadius: '50%',
             margin: '0 auto 1rem',
             animation: 'spin 0.8s linear infinite',
           }}
         />
-        <p style={{ color: '#C5A028' }}>Loading results...</p>
+        <p style={{ color: '#1B3C6D' }}>Loading results...</p>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -181,7 +181,7 @@ export default function ResultsPage() {
             right: 0,
             height: '4px',
             background:
-              'repeating-linear-gradient(90deg, #7B1113 0 8px, #C5A028 8px 16px, #9B1517 16px 24px, #D4A843 24px 32px, #5C0D0F 32px 40px)',
+              'repeating-linear-gradient(90deg, #E8602C 0 8px, #1B3C6D 8px 16px, #F07040 16px 24px, #1B3C6D 24px 32px, #C74E1F 32px 40px)',
             borderRadius: '2px',
           }}
         />
@@ -189,7 +189,7 @@ export default function ResultsPage() {
           style={{
             marginTop: '1.25rem',
             fontSize: 'clamp(1.3rem, 4vw, 1.75rem)',
-            color: '#7B1113',
+            color: '#1B3C6D',
             fontWeight: 700,
           }}
         >
@@ -202,11 +202,11 @@ export default function ResultsPage() {
         style={{
           ...card,
           textAlign: 'center',
-          background: 'linear-gradient(135deg, #FBF5EB, #F5E6D0)',
-          border: '2px solid #C5A028',
+          background: 'linear-gradient(135deg, #F0F4F9, #E8EEF6)',
+          border: '2px solid #1B3C6D',
         }}
       >
-        <p style={{ margin: 0, color: '#C5A028', fontSize: '0.9rem' }}>
+        <p style={{ margin: 0, color: '#1B3C6D', fontSize: '0.9rem' }}>
           Grand Total Raised
         </p>
         <p
@@ -224,7 +224,7 @@ export default function ResultsPage() {
       {/* Per-Cake Results */}
       <h3
         style={{
-          color: '#7B1113',
+          color: '#1B3C6D',
           fontSize: '1.1rem',
           margin: '1.5rem 0 0.75rem',
         }}
@@ -248,13 +248,13 @@ export default function ResultsPage() {
                 style={{
                   margin: 0,
                   fontWeight: 600,
-                  color: '#7B1113',
+                  color: '#1B3C6D',
                   fontSize: '1.05rem',
                 }}
               >
                 {cr.cakeName}
               </p>
-              <p style={{ margin: '0.2rem 0 0', color: '#C5A028', fontSize: '0.9rem' }}>
+              <p style={{ margin: '0.2rem 0 0', color: '#1B3C6D', fontSize: '0.9rem' }}>
                 {cr.winnerName !== 'No bids'
                   ? `Won by ${cr.winnerName}`
                   : 'No bids received'}
@@ -264,7 +264,7 @@ export default function ResultsPage() {
                   style={{
                     margin: '0.3rem 0 0',
                     fontSize: '0.8rem',
-                    color: '#C5A028',
+                    color: '#1B3C6D',
                     fontStyle: 'italic',
                   }}
                 >
@@ -294,7 +294,7 @@ export default function ResultsPage() {
         <>
           <h3
             style={{
-              color: '#7B1113',
+              color: '#1B3C6D',
               fontSize: '1.1rem',
               margin: '1.5rem 0 0.75rem',
             }}
@@ -313,7 +313,7 @@ export default function ResultsPage() {
                   alignItems: 'center',
                 }}
               >
-                <span style={{ fontWeight: 600, color: '#7B1113' }}>{kid}</span>
+                <span style={{ fontWeight: 600, color: '#1B3C6D' }}>{kid}</span>
                 <span style={badge}>
                   ${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </span>
@@ -328,14 +328,14 @@ export default function ResultsPage() {
           style={{
             ...card,
             marginTop: '1.5rem',
-            background: 'linear-gradient(135deg, #FBF5EB, #F5E6D0)',
-            border: '2px solid #C5A028',
+            background: 'linear-gradient(135deg, #F0F4F9, #E8EEF6)',
+            border: '2px solid #1B3C6D',
           }}
         >
           <h3
             style={{
               margin: '0 0 0.75rem',
-              color: '#7B1113',
+              color: '#1B3C6D',
               fontSize: '1.1rem',
             }}
           >
@@ -360,7 +360,7 @@ export default function ResultsPage() {
               display: 'inline-block',
               marginTop: '0.75rem',
               padding: '0.6rem 1.25rem',
-              background: '#7B1113',
+              background: '#E8602C',
               color: '#fff',
               borderRadius: '0.5rem',
               textDecoration: 'none',
@@ -380,15 +380,15 @@ export default function ResultsPage() {
             ...card,
             marginTop: '1rem',
             textAlign: 'center',
-            background: 'linear-gradient(135deg, #F5E6D0, #FBF5EB)',
-            border: '2px solid #C5A028',
+            background: 'linear-gradient(135deg, #E8EEF6, #F0F4F9)',
+            border: '2px solid #1B3C6D',
           }}
         >
           <p
             style={{
               margin: 0,
               fontSize: '1.1rem',
-              color: '#7B1113',
+              color: '#1B3C6D',
               fontStyle: 'italic',
               lineHeight: 1.6,
             }}
@@ -405,7 +405,7 @@ export default function ResultsPage() {
             textAlign: 'center',
             marginTop: '1.5rem',
             padding: '1rem',
-            color: '#C5A028',
+            color: '#1B3C6D',
           }}
         >
           <p style={{ fontSize: '1.1rem', fontStyle: 'italic' }}>

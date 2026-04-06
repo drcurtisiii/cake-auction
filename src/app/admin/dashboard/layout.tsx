@@ -15,7 +15,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <nav className="sticky top-0 z-30 flex items-center justify-between bg-white px-6 py-3 shadow-sm">
-        <span className="text-lg font-bold text-[#7B1113]">
+        <span className="text-lg font-bold text-[#1B3C6D]">
           Cake Auction Admin
         </span>
 

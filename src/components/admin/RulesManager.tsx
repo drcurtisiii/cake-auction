@@ -171,7 +171,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ auctionId }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#7B1113] border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#E8602C] border-t-transparent" />
       </div>
     );
   }
@@ -209,7 +209,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ auctionId }) => {
             <Card key={rule.id} className="!p-3">
               <div className="flex items-center gap-3">
                 {/* Order number */}
-                <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#F5E6D0] text-xs font-semibold text-[#5C0D0F]">
+                <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#E8EEF6] text-xs font-semibold text-[#1B3C6D]">
                   {index + 1}
                 </span>
 

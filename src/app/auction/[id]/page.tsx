@@ -169,7 +169,7 @@ export default function AuctionPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#FBF5EB] to-white">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#F0F4F9] to-white">
         <div className="flex flex-col items-center gap-3">
           <LoadingSpinner size="lg" />
           <p className="text-sm text-gray-500">Loading auction...</p>
@@ -180,7 +180,7 @@ export default function AuctionPage() {
 
   if (error || !auction) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#FBF5EB] to-white px-4">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#F0F4F9] to-white px-4">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-800">Oops!</h1>
           <p className="mt-2 text-gray-500">{error || 'Auction not found.'}</p>
@@ -191,7 +191,7 @@ export default function AuctionPage() {
 
   if (effectiveStatus === 'draft') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#FBF5EB] to-white px-4">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#F0F4F9] to-white px-4">
         <div className="text-center">
           <span className="text-5xl" aria-hidden="true">🔒</span>
           <h1 className="mt-4 text-2xl font-bold text-gray-800">
@@ -208,14 +208,14 @@ export default function AuctionPage() {
   /* ── Main layout ───────────────────────────────────────── */
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#FBF5EB] via-white to-amber-50">
+    <div className="min-h-screen bg-gradient-to-b from-[#F0F4F9] via-white to-blue-50">
       {/* ── Status banner ────────────────────────────────── */}
       {effectiveStatus === 'preview' && (
-        <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-center">
-          <p className="text-sm font-semibold text-amber-800">
+        <div className="border-b border-blue-200 bg-blue-50 px-4 py-3 text-center">
+          <p className="text-sm font-semibold text-blue-800">
             Bidding opens soon!{' '}
             {countdown && (
-              <span className="font-mono text-amber-600">{countdown}</span>
+              <span className="font-mono text-blue-600">{countdown}</span>
             )}
           </p>
         </div>
@@ -244,7 +244,7 @@ export default function AuctionPage() {
             Auction Closed{' '}
             <a
               href={`/auction/${auctionId}/results`}
-              className="ml-1 text-[#7B1113] underline hover:text-[#5C0D0F]"
+              className="ml-1 text-[#E8602C] underline hover:text-[#C74E1F]"
             >
               View results
             </a>

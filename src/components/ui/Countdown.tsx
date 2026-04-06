@@ -17,11 +17,11 @@ const variantStyles: Record<
   { container: string; digit: string; separator: string; label: string; unit: string }
 > = {
   preview: {
-    container: 'bg-amber-50 border border-amber-200 text-amber-900',
-    digit: 'bg-amber-100 text-amber-900',
-    separator: 'text-amber-400',
-    label: 'text-amber-700',
-    unit: 'text-amber-500',
+    container: 'bg-blue-50 border border-blue-200 text-blue-900',
+    digit: 'bg-blue-100 text-blue-900',
+    separator: 'text-blue-400',
+    label: 'text-blue-700',
+    unit: 'text-blue-500',
   },
   live: {
     container: 'bg-green-50 border border-green-200 text-green-900',
