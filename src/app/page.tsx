@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import type { Auction, AuctionWithStatus } from '@/types';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return 'TBD';
