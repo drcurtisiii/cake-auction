@@ -1,0 +1,576 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" version="24.7.5">
+  <diagram name="Cake Auction Architecture v3" id="cake-auction-v3">
+    <mxGraphModel dx="1600" dy="1850" grid="1" gridSize="10" guides="1"
+      tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1"
+      pageWidth="1600" pageHeight="1850" background="#0d0d0d" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ==================== TITLE ==================== -->
+        <mxCell id="title" value="&lt;font style=&quot;font-size:24px&quot;&gt;&lt;b&gt;CAKE AUCTION WEBSITE — FULL SYSTEM MAP v3&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size:13px&quot;&gt;School Trip Fundraiser | Mobile-First | Real-Time Bidding | Zero-Friction&lt;/font&gt;"
+          style="text;html=1;whiteSpace=wrap;overflow=hidden;align=center;verticalAlign=middle;fontSize=24;fontFamily=Helvetica;fontColor=#FFFFFF;"
+          parent="1" vertex="1">
+          <mxGeometry x="250" y="15" width="1100" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== USERS ROW ==================== -->
+
+        <mxCell id="admin_user" value="&lt;b&gt;ADMIN&lt;/b&gt;&lt;br&gt;(Organizer / Teacher)"
+          style="shape=mxgraph.basic.person;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#4A90D9;strokeColor=#3A70B0;fontColor=default;fontSize=11;fontFamily=Helvetica;"
+          parent="1" vertex="1">
+          <mxGeometry x="155" y="90" width="110" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="bidder_user" value="&lt;b&gt;PUBLIC BIDDER&lt;/b&gt;&lt;br&gt;(Mobile Phone)"
+          style="shape=mxgraph.basic.person;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#50C878;strokeColor=#3AA060;fontColor=default;fontSize=11;fontFamily=Helvetica;"
+          parent="1" vertex="1">
+          <mxGeometry x="1335" y="90" width="110" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- ==================== ADMIN PANEL (LEFT) ==================== -->
+        <!-- ============================================================ -->
+
+        <mxCell id="admin_panel" value="&lt;b&gt;ADMIN PANEL&lt;/b&gt;"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#1A2744;strokeColor=#5B7EC0;fontColor=default;fontSize=14;fontFamily=Helvetica;verticalAlign=top;spacingTop=8;arcSize=4;strokeWidth=2;"
+          parent="1" vertex="1">
+          <mxGeometry x="30" y="210" width="410" height="870" as="geometry" />
+        </mxCell>
+
+        <!-- Auth -->
+        <mxCell id="admin_auth" value="&lt;b&gt;1. AUTHENTICATION&lt;/b&gt;&lt;br&gt;&lt;br&gt;• Rolling 6-digit passcode = today's date (MMDDYY)&lt;br&gt;  → e.g. 4/6/26 = &lt;b&gt;040626&lt;/b&gt;&lt;br&gt;• Device trusted for &lt;b&gt;30 days&lt;/b&gt; via secure cookie&lt;br&gt;• No username / no account creation needed&lt;br&gt;• Passcode changes daily — old devices stay valid 30 days"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#2C3E6B;strokeColor=#5B7EC0;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;"
+          parent="1" vertex="1">
+          <mxGeometry x="50" y="250" width="370" height="105" as="geometry" />
+        </mxCell>
+
+        <!-- Auction Management -->
+        <mxCell id="admin_auctions" value="&lt;b&gt;2. AUCTION MANAGEMENT (Multiple Auctions)&lt;/b&gt;&lt;br&gt;&lt;br&gt;• Create multiple auctions (e.g. &amp;quot;Spring Bake Sale&amp;quot;, &amp;quot;Fall Festival&amp;quot;)&lt;br&gt;• Set &lt;b&gt;public-viewable date/time&lt;/b&gt; (pre-auction preview)&lt;br&gt;• Set &lt;b&gt;bidding-opens date/time&lt;/b&gt; (go-live)&lt;br&gt;• Set &lt;b&gt;bidding-closes date/time&lt;/b&gt;&lt;br&gt;• &amp;quot;Copy to Calendar&amp;quot; button generates .ics for public"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#2C3E6B;strokeColor=#5B7EC0;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;"
+          parent="1" vertex="1">
+          <mxGeometry x="50" y="365" width="370" height="110" as="geometry" />
+        </mxCell>
+
+        <!-- Item Management -->
+        <mxCell id="admin_items" value="&lt;b&gt;3. CAKE / ITEM MANAGEMENT&lt;/b&gt;&lt;br&gt;&lt;br&gt;• Add cakes with: name, flavor/description, photo(s)&lt;br&gt;• &lt;b&gt;Who donated&lt;/b&gt; the cake&lt;br&gt;• &lt;b&gt;Which kid / cause&lt;/b&gt; proceeds benefit&lt;br&gt;• Set &lt;b&gt;starting price per item&lt;/b&gt; OR same for all&lt;br&gt;• Set &lt;b&gt;min &amp;amp; max bid increment&lt;/b&gt; (buttons auto-generate)&lt;br&gt;• Items appear on public page as they're added (if auction published)"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#2C3E6B;strokeColor=#5B7EC0;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;"
+          parent="1" vertex="1">
+          <mxGeometry x="50" y="485" width="370" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- ADMIN BID HISTORY — NEW -->
+        <mxCell id="admin_bid_history" value="&lt;b&gt;4. LIVE BID MONITOR (Admin View)&lt;/b&gt;&lt;br&gt;&lt;br&gt;Per-cake expandable bid ledger showing:&lt;br&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;┌────────────┬──────────────┬────────┬──────────────────┐&lt;br&gt;│ &lt;b&gt;Bidder&lt;/b&gt;       │ &lt;b&gt;Phone&lt;/b&gt;            │ &lt;b&gt;Amount&lt;/b&gt; │ &lt;b&gt;Timestamp&lt;/b&gt;              │&lt;br&gt;├────────────┼──────────────┼────────┼──────────────────┤&lt;br&gt;│ Sarah M.    │ (305) 555-1234 │ $45.00  │ 2:14:37&lt;b&gt;.482&lt;/b&gt; PM │&lt;br&gt;│ Mike T.      │ (786) 555-9876 │ $35.00  │ 2:13:22&lt;b&gt;.119&lt;/b&gt; PM │&lt;br&gt;│ Sarah M.    │ (305) 555-1234 │ $25.00  │ 2:11:05&lt;b&gt;.773&lt;/b&gt; PM │&lt;br&gt;└────────────┴──────────────┴────────┴──────────────────┘&lt;/font&gt;&lt;br&gt;&lt;br&gt;• &lt;b&gt;Phone numbers visible&lt;/b&gt; — admin can call winners/no-shows&lt;br&gt;• &lt;b&gt;Millisecond timestamps&lt;/b&gt; for dispute resolution&lt;br&gt;• Real-time updates via WebSocket — same as public&lt;br&gt;• Tap phone number to call directly (mobile admin)"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#1E3A5F;strokeColor=#E0B830;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;strokeWidth=2;"
+          parent="1" vertex="1">
+          <mxGeometry x="50" y="615" width="370" height="220" as="geometry" />
+        </mxCell>
+
+        <!-- Rules & Settings -->
+        <mxCell id="admin_rules" value="&lt;b&gt;5. RULES &amp;amp; SETTINGS (Editable)&lt;/b&gt;&lt;br&gt;&lt;br&gt;• Pickup window (e.g. &amp;quot;30 min after close&amp;quot;)&lt;br&gt;• No-show policy → next highest bidder contacted&lt;br&gt;• Pickup date / time / location info&lt;br&gt;• Custom rules text (admin can add/edit freely)"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#2C3E6B;strokeColor=#5B7EC0;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;"
+          parent="1" vertex="1">
+          <mxGeometry x="50" y="845" width="370" height="85" as="geometry" />
+        </mxCell>
+
+        <!-- Reports -->
+        <mxCell id="admin_reports" value="&lt;b&gt;6. POST-AUCTION REPORTS&lt;/b&gt;&lt;br&gt;&lt;br&gt;• Per-kid fundraising totals | Grand total haul&lt;br&gt;• Winner list with &lt;b&gt;phone numbers&lt;/b&gt; (for pickup/no-show contact)&lt;br&gt;• Full bid history export (with millisecond timestamps)&lt;br&gt;• Exportable CSV/PDF for organizer records"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#2C3E6B;strokeColor=#5B7EC0;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;"
+          parent="1" vertex="1">
+          <mxGeometry x="50" y="940" width="370" height="85" as="geometry" />
+        </mxCell>
+
+        <!-- =============================================================== -->
+        <!-- ==================== PUBLIC EXPERIENCE (RIGHT) ================ -->
+        <!-- =============================================================== -->
+
+        <mxCell id="public_panel" value="&lt;b&gt;PUBLIC EXPERIENCE (MOBILE-FIRST)&lt;/b&gt;"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#1A3324;strokeColor=#50C878;fontColor=default;fontSize=14;fontFamily=Helvetica;verticalAlign=top;spacingTop=8;arcSize=4;strokeWidth=2;"
+          parent="1" vertex="1">
+          <mxGeometry x="1160" y="210" width="410" height="870" as="geometry" />
+        </mxCell>
+
+        <!-- Pre-Auction View -->
+        <mxCell id="pub_preauction" value="&lt;b&gt;1. PRE-AUCTION PREVIEW (No Login)&lt;/b&gt;&lt;br&gt;&lt;br&gt;• Visible once admin publishes (before go-live)&lt;br&gt;• Browse cakes as they're added in real time&lt;br&gt;• See: cake photo, name, donor, beneficiary kid&lt;br&gt;• See: starting price, auction go-live date/time&lt;br&gt;• &lt;b&gt;&amp;quot;Copy to My Calendar&amp;quot;&lt;/b&gt; button (.ics download)&lt;br&gt;• View auction rules&lt;br&gt;• Bid buttons &lt;b&gt;disabled / grayed out&lt;/b&gt; until go-live"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#2B5E3B;strokeColor=#50C878;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;"
+          parent="1" vertex="1">
+          <mxGeometry x="1180" y="250" width="370" height="125" as="geometry" />
+        </mxCell>
+
+        <!-- Bidder Registration -->
+        <mxCell id="pub_register" value="&lt;b&gt;2. BIDDER REGISTRATION (On First Bid Only)&lt;/b&gt;&lt;br&gt;&lt;br&gt;• Triggered ONLY when user first taps a bid button&lt;br&gt;• Modal: &lt;b&gt;Name + Phone Number&lt;/b&gt;&lt;br&gt;• No email, no credit card, no account&lt;br&gt;• Stored in &lt;b&gt;device cookie / localStorage&lt;/b&gt;&lt;br&gt;• All future bids auto-tied to this device&lt;br&gt;• Phone visible to &lt;b&gt;admin only&lt;/b&gt; (not shown publicly)&lt;br&gt;• &amp;quot;Not you? Tap to change&amp;quot; option"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#2B5E3B;strokeColor=#50C878;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;"
+          parent="1" vertex="1">
+          <mxGeometry x="1180" y="385" width="370" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Live Bidding -->
+        <mxCell id="pub_bidding" value="&lt;b&gt;3. LIVE BIDDING (During Auction Window)&lt;/b&gt;&lt;br&gt;&lt;br&gt;• Cake card shows: photo, current high bid, high bidder name&lt;br&gt;• &lt;b&gt;Preset bid buttons&lt;/b&gt; auto-calculated from admin's&lt;br&gt;  min/max increment (e.g. +$5, +$10, +$15, +$25)&lt;br&gt;• One-tap bidding — no typing amounts&lt;br&gt;• &amp;quot;Proceeds go to: [Kid Name]'s trip fund&amp;quot;&lt;br&gt;• &amp;quot;Donated by: [Donor Name]&amp;quot;&lt;br&gt;• Countdown timer to auction close&lt;br&gt;• &lt;b&gt;All updates pushed instantly via WebSocket&lt;/b&gt;"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#2B5E3B;strokeColor=#50C878;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;"
+          parent="1" vertex="1">
+          <mxGeometry x="1180" y="515" width="370" height="135" as="geometry" />
+        </mxCell>
+
+        <!-- PUBLIC BID HISTORY — NEW -->
+        <mxCell id="pub_bid_history" value="&lt;b&gt;4. BID HISTORY PER CAKE (Public View)&lt;/b&gt;&lt;br&gt;&lt;br&gt;Expandable bid list on each cake card:&lt;br&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;┌────────────┬────────┬─────────────┐&lt;br&gt;│ &lt;b&gt;Bidder&lt;/b&gt;       │ &lt;b&gt;Amount&lt;/b&gt; │ &lt;b&gt;Time&lt;/b&gt;              │&lt;br&gt;├────────────┼────────┼─────────────┤&lt;br&gt;│ Sarah M.    │ $45.00  │ 2:14 PM       │&lt;br&gt;│ Mike T.      │ $35.00  │ 2:13 PM       │&lt;br&gt;│ Sarah M.    │ $25.00  │ 2:11 PM       │&lt;br&gt;│ Jenny R.     │ $15.00  │ 2:08 PM       │&lt;br&gt;└────────────┴────────┴─────────────┘&lt;/font&gt;&lt;br&gt;&lt;br&gt;• &lt;b&gt;No phone numbers shown&lt;/b&gt; (privacy — admin only)&lt;br&gt;• Time shown to the &lt;b&gt;minute&lt;/b&gt; (no seconds/ms)&lt;br&gt;• Updates &lt;b&gt;instantly&lt;/b&gt; across all devices via WebSocket&lt;br&gt;• Outbid someone you know? They'll see it immediately!"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#1E3A2F;strokeColor=#E0B830;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;strokeWidth=2;"
+          parent="1" vertex="1">
+          <mxGeometry x="1180" y="660" width="370" height="230" as="geometry" />
+        </mxCell>
+
+        <!-- Results & Pickup -->
+        <mxCell id="pub_results" value="&lt;b&gt;5. RESULTS &amp;amp; PICKUP (After Auction Closes)&lt;/b&gt;&lt;br&gt;&lt;br&gt;• &lt;b&gt;Winners displayed&lt;/b&gt; per cake&lt;br&gt;• Per-kid fundraising totals shown publicly&lt;br&gt;• &lt;b&gt;Grand total raised&lt;/b&gt; displayed prominently&lt;br&gt;• &lt;b&gt;Thank you message&lt;/b&gt; to all bidders&lt;br&gt;• &lt;b&gt;Pickup instructions:&lt;/b&gt; date, time, location&lt;br&gt;• Rules reminder (pickup window, no-show policy)"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#2B5E3B;strokeColor=#50C878;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;"
+          parent="1" vertex="1">
+          <mxGeometry x="1180" y="900" width="370" height="110" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- ==================== CENTER: AUCTION LIFECYCLE ============= -->
+        <!-- ============================================================ -->
+
+        <mxCell id="lifecycle_box" value="&lt;b&gt;AUCTION LIFECYCLE — STATE MACHINE&lt;/b&gt;"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#0F0F1A;strokeColor=#E0B830;fontColor=default;fontSize=13;fontFamily=Helvetica;verticalAlign=top;spacingTop=8;arcSize=4;strokeWidth=2;dashed=1;dashPattern=8 4;"
+          parent="1" vertex="1">
+          <mxGeometry x="470" y="210" width="660" height="170" as="geometry" />
+        </mxCell>
+
+        <mxCell id="state_draft" value="&lt;b&gt;DRAFT&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Admin building&lt;br&gt;Not visible&lt;/font&gt;"
+          style="ellipse;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#4A4A6A;strokeColor=#7A7AAA;fontColor=default;fontSize=10;fontFamily=Helvetica;"
+          parent="1" vertex="1">
+          <mxGeometry x="490" y="270" width="100" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="state_published" value="&lt;b&gt;PUBLISHED&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Public can view&lt;br&gt;Items added live&lt;br&gt;No bidding yet&lt;/font&gt;"
+          style="ellipse;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#2C6B3E;strokeColor=#50C878;fontColor=default;fontSize=10;fontFamily=Helvetica;"
+          parent="1" vertex="1">
+          <mxGeometry x="640" y="260" width="110" height="85" as="geometry" />
+        </mxCell>
+
+        <mxCell id="state_live" value="&lt;b&gt;LIVE&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Bidding OPEN&lt;br&gt;Real-time sync&lt;br&gt;Countdown active&lt;/font&gt;"
+          style="ellipse;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#C0392B;strokeColor=#E74C3C;fontColor=default;fontSize=10;fontFamily=Helvetica;"
+          parent="1" vertex="1">
+          <mxGeometry x="800" y="260" width="110" height="85" as="geometry" />
+        </mxCell>
+
+        <mxCell id="state_closed" value="&lt;b&gt;CLOSED&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Results shown&lt;br&gt;Reports ready&lt;br&gt;Pickup info live&lt;/font&gt;"
+          style="ellipse;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#6C3483;strokeColor=#9B59B6;fontColor=default;fontSize=10;fontFamily=Helvetica;"
+          parent="1" vertex="1">
+          <mxGeometry x="960" y="260" width="110" height="85" as="geometry" />
+        </mxCell>
+
+        <!-- Lifecycle arrows -->
+        <mxCell id="lc_arrow1" value="" style="endArrow=classic;html=1;strokeColor=#E0B830;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=none;" parent="1" source="state_draft" target="state_published" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lc_arrow1_label" value="&lt;font style=&quot;font-size:8px&quot;&gt;Admin sets&lt;br&gt;viewable date&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontFamily=Helvetica;fontColor=#FFFFFF;labelBackgroundColor=none;" parent="lc_arrow1" vertex="1" connectable="0">
+          <mxGeometry x="0" y="0" relative="1" as="geometry"><mxPoint y="-14" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <mxCell id="lc_arrow2" value="" style="endArrow=classic;html=1;strokeColor=#E0B830;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=none;" parent="1" source="state_published" target="state_live" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lc_arrow2_label" value="&lt;font style=&quot;font-size:8px&quot;&gt;Go-live&lt;br&gt;date/time hit&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontFamily=Helvetica;fontColor=#FFFFFF;labelBackgroundColor=none;" parent="lc_arrow2" vertex="1" connectable="0">
+          <mxGeometry x="0" y="0" relative="1" as="geometry"><mxPoint y="-14" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <mxCell id="lc_arrow3" value="" style="endArrow=classic;html=1;strokeColor=#E0B830;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=none;" parent="1" source="state_live" target="state_closed" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lc_arrow3_label" value="&lt;font style=&quot;font-size:8px&quot;&gt;Close&lt;br&gt;date/time hit&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontFamily=Helvetica;fontColor=#FFFFFF;labelBackgroundColor=none;" parent="lc_arrow3" vertex="1" connectable="0">
+          <mxGeometry x="0" y="0" relative="1" as="geometry"><mxPoint y="-14" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- ==================== CENTER: APP ARCHITECTURE ============== -->
+        <!-- ============================================================ -->
+
+        <mxCell id="netlify_box" value="&lt;b&gt;NETLIFY — HOSTING + SERVERLESS FUNCTIONS&lt;/b&gt;"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#0F1A2E;strokeColor=#00CEC9;fontColor=default;fontSize=13;fontFamily=Helvetica;verticalAlign=top;spacingTop=8;arcSize=4;strokeWidth=2;dashed=1;dashPattern=8 4;"
+          parent="1" vertex="1">
+          <mxGeometry x="470" y="410" width="660" height="390" as="geometry" />
+        </mxCell>
+
+        <!-- Frontend -->
+        <mxCell id="frontend" value="&lt;b&gt;FRONTEND (React / Next.js)&lt;/b&gt;&lt;br&gt;&lt;br&gt;• &lt;b&gt;/admin&lt;/b&gt; — passcode gate → dashboard&lt;br&gt;• &lt;b&gt;/auction/[id]&lt;/b&gt; — public auction page&lt;br&gt;• &lt;b&gt;/auction/[id]/results&lt;/b&gt; — post-close results&lt;br&gt;• Mobile-first responsive layout&lt;br&gt;• Cake card grid with photo, info, bid buttons&lt;br&gt;• Preset bid buttons (from min/max increment)&lt;br&gt;• &lt;b&gt;Per-cake bid history list&lt;/b&gt; (expandable)&lt;br&gt;• Bidder registration modal (name + phone)&lt;br&gt;• Device cookie for returning bidders&lt;br&gt;• Countdown timer component&lt;br&gt;• &amp;quot;Copy to Calendar&amp;quot; .ics generator&lt;br&gt;• &lt;b&gt;WebSocket client for instant updates&lt;/b&gt;"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#2D3748;strokeColor=#4A5568;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;"
+          parent="1" vertex="1">
+          <mxGeometry x="490" y="450" width="290" height="200" as="geometry" />
+        </mxCell>
+
+        <!-- API Layer -->
+        <mxCell id="api_layer" value="&lt;b&gt;NETLIFY FUNCTIONS (API LAYER)&lt;/b&gt;&lt;br&gt;&lt;br&gt;• &lt;b&gt;POST /api/auth&lt;/b&gt; — validate MMDDYY passcode&lt;br&gt;  → set 30-day device cookie&lt;br&gt;• &lt;b&gt;CRUD /api/auctions&lt;/b&gt; — create, list, update status&lt;br&gt;• &lt;b&gt;CRUD /api/cakes&lt;/b&gt; — add items, set prices/increments&lt;br&gt;• &lt;b&gt;POST /api/bids&lt;/b&gt; — validate, save with &lt;b&gt;ms timestamp&lt;/b&gt;&lt;br&gt;• &lt;b&gt;GET /api/bids/[cake_id]&lt;/b&gt; — full bid history&lt;br&gt;• &lt;b&gt;POST /api/upload&lt;/b&gt; — proxy photo to ImgBB&lt;br&gt;• &lt;b&gt;POST /api/bidders&lt;/b&gt; — register name + phone&lt;br&gt;• &lt;b&gt;GET /api/results/[auction_id]&lt;/b&gt; — winners, totals&lt;br&gt;• &lt;b&gt;CRUD /api/rules&lt;/b&gt; — admin-editable rules text&lt;br&gt;• &lt;b&gt;GET /api/calendar/[id]&lt;/b&gt; — .ics file"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#2D3748;strokeColor=#4A5568;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;"
+          parent="1" vertex="1">
+          <mxGeometry x="810" y="450" width="300" height="195" as="geometry" />
+        </mxCell>
+
+        <!-- Bid Button Logic -->
+        <mxCell id="bid_logic" value="&lt;b&gt;BID BUTTON GENERATION LOGIC&lt;/b&gt;&lt;br&gt;&lt;br&gt;Admin sets: min_increment=$5, max_increment=$25&lt;br&gt;→ System generates: &lt;b&gt;+$5 | +$10 | +$15 | +$25&lt;/b&gt;&lt;br&gt;Each button = current_high_bid + increment | Disabled if not LIVE"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#1F2937;strokeColor=#E0B830;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;dashed=1;dashPattern=4 4;"
+          parent="1" vertex="1">
+          <mxGeometry x="490" y="665" width="290" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- Device Identity -->
+        <mxCell id="device_id" value="&lt;b&gt;DEVICE-TIED IDENTITY&lt;/b&gt;&lt;br&gt;&lt;br&gt;First bid tap → modal → Name + Phone → cookie set&lt;br&gt;All subsequent bids auto-attributed | No login ever&lt;br&gt;Admin cookie: separate 30-day trust token"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#1F2937;strokeColor=#E0B830;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;dashed=1;dashPattern=4 4;"
+          parent="1" vertex="1">
+          <mxGeometry x="810" y="665" width="300" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- CI/CD -->
+        <mxCell id="cicd_note" value="&lt;b&gt;CI/CD:&lt;/b&gt; GitHub push to main → Netlify auto-builds &amp;amp; deploys"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#1F2937;strokeColor=#374151;fontColor=default;fontSize=10;fontFamily=Helvetica;align=center;arcSize=6;"
+          parent="1" vertex="1">
+          <mxGeometry x="580" y="755" width="440" height="28" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- =============== REAL-TIME SYNC ENGINE (NEW) ================ -->
+        <!-- ============================================================ -->
+
+        <mxCell id="realtime_box" value="&lt;b&gt;REAL-TIME SYNC ENGINE&lt;/b&gt;"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#0D1B2A;strokeColor=#FF6B35;fontColor=default;fontSize=13;fontFamily=Helvetica;verticalAlign=top;spacingTop=8;arcSize=4;strokeWidth=2;"
+          parent="1" vertex="1">
+          <mxGeometry x="470" y="820" width="660" height="210" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ws_server" value="&lt;b&gt;WEBSOCKET / SSE SERVER&lt;/b&gt;&lt;br&gt;(Netlify Edge Function or Ably/Pusher)&lt;br&gt;&lt;br&gt;• Every new bid → broadcast to ALL connected devices&lt;br&gt;• Payload: cake_id, bidder_name, amount, timestamp&lt;br&gt;• Admin channel: includes phone + millisecond precision&lt;br&gt;• Public channel: name + amount + time (minute only)&lt;br&gt;• New cake added → push to all viewers in pre-auction&lt;br&gt;• Auction state change → push to all (LIVE, CLOSED)"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#1A2A3E;strokeColor=#FF6B35;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;"
+          parent="1" vertex="1">
+          <mxGeometry x="490" y="860" width="310" height="145" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ws_why" value="&lt;b&gt;WHY REAL-TIME MATTERS&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Without instant sync, a bidder could see stale data&lt;br&gt;and think they're winning when they've been outbid.&lt;br&gt;&lt;br&gt;&lt;b&gt;Every bid, every device, instantly.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Options (in order of simplicity):&lt;br&gt;1. &lt;b&gt;Ably&lt;/b&gt; or &lt;b&gt;Pusher&lt;/b&gt; — managed WebSocket service&lt;br&gt;   (free tier likely covers school auction traffic)&lt;br&gt;2. &lt;b&gt;Supabase Realtime&lt;/b&gt; — if using Supabase layer&lt;br&gt;3. &lt;b&gt;SSE via Netlify Edge&lt;/b&gt; — server-sent events&lt;/font&gt;"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#1A2A3E;strokeColor=#FF6B35;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;"
+          parent="1" vertex="1">
+          <mxGeometry x="820" y="860" width="290" height="145" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- =============== BID HISTORY COMPARISON (NEW) =============== -->
+        <!-- ============================================================ -->
+
+        <mxCell id="comparison_title" value="&lt;font style=&quot;font-size:13px&quot;&gt;&lt;b&gt;ADMIN vs. PUBLIC — BID HISTORY VIEWS&lt;/b&gt;&lt;/font&gt;"
+          style="text;html=1;whiteSpace=wrap;overflow=hidden;align=center;verticalAlign=middle;fontSize=13;fontFamily=Helvetica;fontColor=#FFFFFF;"
+          parent="1" vertex="1">
+          <mxGeometry x="470" y="1060" width="660" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="compare_admin" value="&lt;b&gt;ADMIN VIEW (Full Detail + Contact Info)&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;┌───────────┬───────────────┬────────┬────────────────────┐&lt;br&gt;│ &lt;b&gt;Bidder&lt;/b&gt;      │ &lt;b&gt;Phone&lt;/b&gt;              │ &lt;b&gt;Amount&lt;/b&gt; │ &lt;b&gt;Time (w/ seconds)&lt;/b&gt;       │&lt;br&gt;├───────────┼───────────────┼────────┼────────────────────┤&lt;br&gt;│ Sarah M.   │ (305) 555-1234  │ $45.00  │ 2:14:37&lt;b&gt;.482&lt;/b&gt; PM     │&lt;br&gt;│ Mike T.     │ (786) 555-9876  │ $35.00  │ 2:13:22&lt;b&gt;.119&lt;/b&gt; PM     │&lt;br&gt;│ Sarah M.   │ (305) 555-1234  │ $25.00  │ 2:11:05&lt;b&gt;.773&lt;/b&gt; PM     │&lt;br&gt;│ Jenny R.    │ (954) 555-3456  │ $15.00  │ 2:08:41&lt;b&gt;.201&lt;/b&gt; PM     │&lt;br&gt;└───────────┴───────────────┴────────┴────────────────────┘&lt;/font&gt;&lt;br&gt;&lt;br&gt;✓ Phone numbers for winner contact / no-show calls&lt;br&gt;✓ Millisecond timestamps for dispute resolution&lt;br&gt;✓ Tap-to-call on mobile admin device"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#1E3A5F;strokeColor=#5B9BD5;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;strokeWidth=2;"
+          parent="1" vertex="1">
+          <mxGeometry x="470" y="1090" width="325" height="210" as="geometry" />
+        </mxCell>
+
+        <mxCell id="compare_public" value="&lt;b&gt;PUBLIC VIEW (Fun + Competitive)&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;┌───────────┬────────┬──────────────┐&lt;br&gt;│ &lt;b&gt;Bidder&lt;/b&gt;      │ &lt;b&gt;Amount&lt;/b&gt; │ &lt;b&gt;Time&lt;/b&gt;               │&lt;br&gt;├───────────┼────────┼──────────────┤&lt;br&gt;│ Sarah M.   │ $45.00  │ 2:14 PM        │&lt;br&gt;│ Mike T.     │ $35.00  │ 2:13 PM        │&lt;br&gt;│ Sarah M.   │ $25.00  │ 2:11 PM        │&lt;br&gt;│ Jenny R.    │ $15.00  │ 2:08 PM        │&lt;br&gt;└───────────┴────────┴──────────────┘&lt;/font&gt;&lt;br&gt;&lt;br&gt;✓ See who you're bidding against&lt;br&gt;✓ No phone numbers (privacy)&lt;br&gt;✓ Time to the minute only (no seconds)&lt;br&gt;✓ Fuels friendly competition!"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#1E3A2F;strokeColor=#50C878;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;strokeWidth=2;"
+          parent="1" vertex="1">
+          <mxGeometry x="805" y="1090" width="325" height="210" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- ==================== INFRASTRUCTURE (BOTTOM) =============== -->
+        <!-- ============================================================ -->
+
+        <!-- GitHub -->
+        <mxCell id="github" value="&lt;b&gt;GITHUB&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Source Code Repository&lt;/font&gt;&lt;br&gt;&lt;br&gt;• Frontend + components&lt;br&gt;• Netlify functions&lt;br&gt;• DB migration scripts&lt;br&gt;• .env config (secrets in Netlify)"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#24292E;strokeColor=#586069;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;"
+          parent="1" vertex="1">
+          <mxGeometry x="30" y="1140" width="200" height="110" as="geometry" />
+        </mxCell>
+
+        <!-- Neon Database -->
+        <mxCell id="neon_db" value="&lt;b&gt;NEON DATABASE (Serverless PostgreSQL)&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;&lt;b&gt;auctions&lt;/b&gt; — id, title, description, preview_at, live_at, close_at, status,&lt;br&gt;              pickup_date, pickup_time, pickup_location, thank_you_msg&lt;br&gt;&lt;b&gt;cakes&lt;/b&gt; — id, auction_id, name, flavor, description, donor_name,&lt;br&gt;           beneficiary_kid, imgbb_url, starting_price, min_increment, max_increment&lt;br&gt;&lt;b&gt;bidders&lt;/b&gt; — id, name, &lt;b&gt;phone&lt;/b&gt;, device_token, created_at&lt;br&gt;&lt;b&gt;bids&lt;/b&gt; — id, cake_id, bidder_id, amount, &lt;b&gt;timestamp (TIMESTAMPTZ w/ ms precision)&lt;/b&gt;&lt;br&gt;&lt;b&gt;rules&lt;/b&gt; — id, auction_id, rule_text, sort_order&lt;br&gt;&lt;b&gt;admin_sessions&lt;/b&gt; — device_token, authenticated_at, expires_at&lt;/font&gt;"
+          style="shape=cylinder3;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#6C3483;strokeColor=#9B59B6;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=22;size=15;arcSize=6;boundedLbl=1;"
+          parent="1" vertex="1">
+          <mxGeometry x="30" y="1340" width="560" height="185" as="geometry" />
+        </mxCell>
+
+        <!-- ImgBB -->
+        <mxCell id="imgbb" value="&lt;b&gt;IMGBB.COM&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Image Hosting API&lt;/font&gt;&lt;br&gt;&lt;br&gt;• Admin uploads cake photo&lt;br&gt;• API returns public CDN URL&lt;br&gt;• URL stored in cakes.imgbb_url&lt;br&gt;• Public page loads from CDN"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#C0392B;strokeColor=#E74C3C;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;"
+          parent="1" vertex="1">
+          <mxGeometry x="30" y="1265" width="200" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- .ics Calendar -->
+        <mxCell id="ics_block" value="&lt;b&gt;.ICS CALENDAR FILE&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Generated on-the-fly by API&lt;br&gt;Auction title, go-live time, link&lt;br&gt;Apple / Google / Outlook compatible&lt;/font&gt;"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#1F6F4A;strokeColor=#27AE60;fontColor=default;fontSize=10;fontFamily=Helvetica;align=left;spacingLeft=10;spacingRight=10;spacingTop=4;arcSize=6;"
+          parent="1" vertex="1">
+          <mxGeometry x="250" y="1265" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== CONNECTING ARROWS ==================== -->
+
+        <!-- Admin User → Admin Panel -->
+        <mxCell id="arrow_admin_to_panel" value="" style="endArrow=classic;html=1;strokeColor=#5B9BD5;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.15;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=none;" parent="1" source="admin_user" target="admin_panel" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Bidder → Public Panel -->
+        <mxCell id="arrow_bidder_to_panel" value="" style="endArrow=classic;html=1;strokeColor=#50C878;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.85;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=none;" parent="1" source="bidder_user" target="public_panel" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Admin Panel → API -->
+        <mxCell id="arrow_admin_to_api" value="" style="endArrow=classic;startArrow=classic;html=1;strokeColor=#5B9BD5;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;labelBackgroundColor=none;" parent="1" source="admin_items" target="api_layer" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Public Panel → Frontend -->
+        <mxCell id="arrow_public_to_fe" value="" style="endArrow=classic;startArrow=classic;html=1;strokeColor=#50C878;strokeWidth=2;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=none;" parent="1" source="pub_bidding" target="frontend" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1150" y="583" />
+              <mxPoint x="1150" y="550" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Frontend ↔ API -->
+        <mxCell id="arrow_fe_to_api" value="" style="endArrow=classic;startArrow=classic;html=1;strokeColor=#00CEC9;strokeWidth=2;exitX=1;exitY=0.35;exitDx=0;exitDy=0;entryX=0;entryY=0.35;entryDx=0;entryDy=0;labelBackgroundColor=none;" parent="1" source="frontend" target="api_layer" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow_fe_to_api_label" value="&lt;font style=&quot;font-size:9px&quot;&gt;REST API&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontFamily=Helvetica;fontColor=#FFFFFF;labelBackgroundColor=none;" parent="arrow_fe_to_api" vertex="1" connectable="0">
+          <mxGeometry x="0" y="0" relative="1" as="geometry"><mxPoint y="-12" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- GitHub → Netlify -->
+        <mxCell id="arrow_github_to_netlify" value="" style="endArrow=classic;html=1;strokeColor=#586069;strokeWidth=2;dashed=1;dashPattern=8 4;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;labelBackgroundColor=none;" parent="1" source="github" target="netlify_box" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="350" y="1173" />
+              <mxPoint x="350" y="800" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow_github_label" value="&lt;font style=&quot;font-size:9px&quot;&gt;git push →&lt;br&gt;auto deploy&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontFamily=Helvetica;fontColor=#FFFFFF;labelBackgroundColor=none;" parent="arrow_github_to_netlify" vertex="1" connectable="0">
+          <mxGeometry x="0.3" y="0" relative="1" as="geometry"><mxPoint x="-30" y="0" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- API → Neon DB -->
+        <mxCell id="arrow_api_to_neon" value="" style="endArrow=classic;startArrow=classic;html=1;strokeColor=#9B59B6;strokeWidth=2;labelBackgroundColor=none;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="810" y="645" as="sourcePoint" />
+            <mxPoint x="400" y="1380" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="810" y="1380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow_neon_label" value="&lt;font style=&quot;font-size:9px&quot;&gt;SQL — auctions, cakes, bids (w/ ms timestamps), bidders (w/ phone), rules&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontFamily=Helvetica;fontColor=#FFFFFF;labelBackgroundColor=none;" parent="arrow_api_to_neon" vertex="1" connectable="0">
+          <mxGeometry x="0.3" y="0" relative="1" as="geometry"><mxPoint y="-12" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- API → ImgBB -->
+        <mxCell id="arrow_api_to_imgbb" value="" style="endArrow=classic;startArrow=classic;html=1;strokeColor=#E74C3C;strokeWidth=2;labelBackgroundColor=none;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="490" y="645" as="sourcePoint" />
+            <mxPoint x="180" y="1265" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="460" y="645" />
+              <mxPoint x="460" y="1300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow_imgbb_label" value="&lt;font style=&quot;font-size:9px&quot;&gt;Upload photo&lt;br&gt;→ CDN URL&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontFamily=Helvetica;fontColor=#FFFFFF;labelBackgroundColor=none;" parent="arrow_api_to_imgbb" vertex="1" connectable="0">
+          <mxGeometry x="0.5" y="0" relative="1" as="geometry"><mxPoint x="-30" y="0" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- WebSocket → All Devices arrows -->
+        <mxCell id="arrow_ws_to_admin" value="" style="endArrow=classic;html=1;strokeColor=#FF6B35;strokeWidth=2;entryX=0.5;entryY=1;entryDx=0;entryDy=0;labelBackgroundColor=none;" parent="1" target="admin_bid_history" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="490" y="900" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="450" y="900" />
+              <mxPoint x="450" y="860" />
+              <mxPoint x="235" y="860" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow_ws_admin_label" value="&lt;font style=&quot;font-size:8px&quot;&gt;Admin channel&lt;br&gt;(+phone, +ms)&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontFamily=Helvetica;fontColor=#FFFFFF;labelBackgroundColor=none;" parent="arrow_ws_to_admin" vertex="1" connectable="0">
+          <mxGeometry x="0.5" y="0" relative="1" as="geometry"><mxPoint y="-12" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <mxCell id="arrow_ws_to_public" value="" style="endArrow=classic;html=1;strokeColor=#FF6B35;strokeWidth=2;entryX=0.5;entryY=1;entryDx=0;entryDy=0;labelBackgroundColor=none;" parent="1" target="pub_bid_history" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="800" y="935" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="1150" y="935" />
+              <mxPoint x="1150" y="920" />
+              <mxPoint x="1365" y="920" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow_ws_public_label" value="&lt;font style=&quot;font-size:8px&quot;&gt;Public channel&lt;br&gt;(no phone, min only)&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontFamily=Helvetica;fontColor=#FFFFFF;labelBackgroundColor=none;" parent="arrow_ws_to_public" vertex="1" connectable="0">
+          <mxGeometry x="0.5" y="0" relative="1" as="geometry"><mxPoint y="-12" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- ==================== BIDDER JOURNEY ==================== -->
+
+        <mxCell id="flow_title" value="&lt;font style=&quot;font-size:12px&quot;&gt;&lt;b&gt;BIDDER JOURNEY (ZERO FRICTION)&lt;/b&gt;&lt;/font&gt;"
+          style="text;html=1;whiteSpace=wrap;overflow=hidden;align=left;verticalAlign=top;fontSize=12;fontFamily=Helvetica;fontColor=#FFFFFF;"
+          parent="1" vertex="1">
+          <mxGeometry x="640" y="1340" width="300" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="step1" value="&lt;b&gt;1&lt;/b&gt;&lt;br&gt;Open link&lt;br&gt;on phone"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#2B5E3B;strokeColor=#50C878;fontColor=default;fontSize=9;fontFamily=Helvetica;arcSize=12;"
+          parent="1" vertex="1">
+          <mxGeometry x="640" y="1375" width="75" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="step2" value="&lt;b&gt;2&lt;/b&gt;&lt;br&gt;Browse cakes&lt;br&gt;(no login)"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#2B5E3B;strokeColor=#50C878;fontColor=default;fontSize=9;fontFamily=Helvetica;arcSize=12;"
+          parent="1" vertex="1">
+          <mxGeometry x="740" y="1375" width="75" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="step3" value="&lt;b&gt;3&lt;/b&gt;&lt;br&gt;Tap bid →&lt;br&gt;Name+Phone"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#C0392B;strokeColor=#E74C3C;fontColor=default;fontSize=9;fontFamily=Helvetica;arcSize=12;"
+          parent="1" vertex="1">
+          <mxGeometry x="840" y="1375" width="75" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="step4" value="&lt;b&gt;4&lt;/b&gt;&lt;br&gt;Tap preset&lt;br&gt;bid amount"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#2B5E3B;strokeColor=#50C878;fontColor=default;fontSize=9;fontFamily=Helvetica;arcSize=12;"
+          parent="1" vertex="1">
+          <mxGeometry x="940" y="1375" width="75" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="step5" value="&lt;b&gt;5&lt;/b&gt;&lt;br&gt;ALL devices&lt;br&gt;update live"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#5A3010;strokeColor=#FF6B35;fontColor=default;fontSize=9;fontFamily=Helvetica;arcSize=12;"
+          parent="1" vertex="1">
+          <mxGeometry x="1040" y="1375" width="75" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="step6" value="&lt;b&gt;6&lt;/b&gt;&lt;br&gt;See who&lt;br&gt;outbid you!"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#2B5E3B;strokeColor=#50C878;fontColor=default;fontSize=9;fontFamily=Helvetica;arcSize=12;"
+          parent="1" vertex="1">
+          <mxGeometry x="1140" y="1375" width="75" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="step7" value="&lt;b&gt;7&lt;/b&gt;&lt;br&gt;Auction closes&lt;br&gt;Results shown"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#6C3483;strokeColor=#9B59B6;fontColor=default;fontSize=9;fontFamily=Helvetica;arcSize=12;"
+          parent="1" vertex="1">
+          <mxGeometry x="1240" y="1375" width="80" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="step8" value="&lt;b&gt;8&lt;/b&gt;&lt;br&gt;Pickup info&lt;br&gt;&amp;amp; thank you"
+          style="rounded=1;whiteSpace=wrap;html=1;overflow=hidden;fillColor=#6C3483;strokeColor=#9B59B6;fontColor=default;fontSize=9;fontFamily=Helvetica;arcSize=12;"
+          parent="1" vertex="1">
+          <mxGeometry x="1345" y="1375" width="80" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Journey arrows -->
+        <mxCell id="j1" value="" style="endArrow=classic;html=1;strokeColor=#50C878;strokeWidth=1;labelBackgroundColor=none;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="715" y="1400" as="sourcePoint" /><mxPoint x="740" y="1400" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="j2" value="" style="endArrow=classic;html=1;strokeColor=#50C878;strokeWidth=1;labelBackgroundColor=none;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="815" y="1400" as="sourcePoint" /><mxPoint x="840" y="1400" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="j3" value="" style="endArrow=classic;html=1;strokeColor=#E74C3C;strokeWidth=1;labelBackgroundColor=none;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="915" y="1400" as="sourcePoint" /><mxPoint x="940" y="1400" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="j4" value="" style="endArrow=classic;html=1;strokeColor=#FF6B35;strokeWidth=1;labelBackgroundColor=none;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1015" y="1400" as="sourcePoint" /><mxPoint x="1040" y="1400" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="j5" value="" style="endArrow=classic;html=1;strokeColor=#50C878;strokeWidth=1;labelBackgroundColor=none;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1115" y="1400" as="sourcePoint" /><mxPoint x="1140" y="1400" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="j6" value="" style="endArrow=classic;html=1;strokeColor=#9B59B6;strokeWidth=1;labelBackgroundColor=none;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1215" y="1400" as="sourcePoint" /><mxPoint x="1240" y="1400" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="j7" value="" style="endArrow=classic;html=1;strokeColor=#9B59B6;strokeWidth=1;labelBackgroundColor=none;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1320" y="1400" as="sourcePoint" /><mxPoint x="1345" y="1400" as="targetPoint" /></mxGeometry>
+        </mxCell>
+
+        <!-- ==================== LEGEND ==================== -->
+
+        <mxCell id="legend" value=""
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#252540;strokeColor=#555580;arcSize=6;fontColor=default;"
+          parent="1" vertex="1">
+          <mxGeometry x="640" y="1450" width="785" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="legendTitle" value="&lt;b&gt;LEGEND&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
+          <mxGeometry x="660" y="1452" width="60" height="18" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lg1" value="" style="endArrow=classic;html=1;strokeColor=#5B9BD5;strokeWidth=2;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="660" y="1481" as="sourcePoint" /><mxPoint x="690" y="1481" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lg1t" value="Admin" style="text;html=1;align=left;verticalAlign=middle;fontSize=9;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
+          <mxGeometry x="693" y="1473" width="45" height="16" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lg2" value="" style="endArrow=classic;html=1;strokeColor=#50C878;strokeWidth=2;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="660" y="1501" as="sourcePoint" /><mxPoint x="690" y="1501" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lg2t" value="Public" style="text;html=1;align=left;verticalAlign=middle;fontSize=9;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
+          <mxGeometry x="693" y="1493" width="45" height="16" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lg3" value="" style="endArrow=classic;html=1;strokeColor=#FF6B35;strokeWidth=2;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="760" y="1481" as="sourcePoint" /><mxPoint x="790" y="1481" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lg3t" value="Real-time sync" style="text;html=1;align=left;verticalAlign=middle;fontSize=9;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
+          <mxGeometry x="793" y="1473" width="80" height="16" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lg4" value="" style="endArrow=classic;html=1;strokeColor=#E0B830;strokeWidth=2;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="760" y="1501" as="sourcePoint" /><mxPoint x="790" y="1501" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lg4t" value="Lifecycle" style="text;html=1;align=left;verticalAlign=middle;fontSize=9;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
+          <mxGeometry x="793" y="1493" width="60" height="16" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lg5" value="" style="endArrow=classic;startArrow=classic;html=1;strokeColor=#00CEC9;strokeWidth=2;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="900" y="1481" as="sourcePoint" /><mxPoint x="930" y="1481" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lg5t" value="Internal API" style="text;html=1;align=left;verticalAlign=middle;fontSize=9;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
+          <mxGeometry x="933" y="1473" width="65" height="16" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lg6" value="" style="endArrow=classic;startArrow=classic;html=1;strokeColor=#9B59B6;strokeWidth=2;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="900" y="1501" as="sourcePoint" /><mxPoint x="930" y="1501" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lg6t" value="Database" style="text;html=1;align=left;verticalAlign=middle;fontSize=9;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
+          <mxGeometry x="933" y="1493" width="55" height="16" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lg7" value="" style="endArrow=classic;startArrow=classic;html=1;strokeColor=#E74C3C;strokeWidth=2;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1050" y="1481" as="sourcePoint" /><mxPoint x="1080" y="1481" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lg7t" value="Image CDN" style="text;html=1;align=left;verticalAlign=middle;fontSize=9;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
+          <mxGeometry x="1083" y="1473" width="65" height="16" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lg8" value="" style="endArrow=classic;html=1;strokeColor=#586069;strokeWidth=2;dashed=1;dashPattern=8 4;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1050" y="1501" as="sourcePoint" /><mxPoint x="1080" y="1501" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lg8t" value="CI/CD" style="text;html=1;align=left;verticalAlign=middle;fontSize=9;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
+          <mxGeometry x="1083" y="1493" width="40" height="16" as="geometry" />
+        </mxCell>
+
+        <!-- Highlighted border keys -->
+        <mxCell id="lg9" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#E0B830;strokeWidth=2;arcSize=12;" parent="1" vertex="1">
+          <mxGeometry x="1190" y="1475" width="20" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="lg9t" value="Highlighted = key feature" style="text;html=1;align=left;verticalAlign=middle;fontSize=9;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
+          <mxGeometry x="1215" y="1469" width="130" height="16" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lg10" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#FF6B35;strokeWidth=2;arcSize=12;" parent="1" vertex="1">
+          <mxGeometry x="1190" y="1495" width="20" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="lg10t" value="Real-time infrastructure" style="text;html=1;align=left;verticalAlign=middle;fontSize=9;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
+          <mxGeometry x="1215" y="1489" width="130" height="16" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== FOOTER ==================== -->
+        <mxCell id="footer" value="&lt;font style=&quot;font-size:9px&quot;&gt;&lt;b&gt;Stack:&lt;/b&gt; GitHub → Netlify → Neon PostgreSQL → ImgBB → Ably/Pusher (WebSocket) | &lt;b&gt;Auth:&lt;/b&gt; MMDDYY passcode, 30-day device trust | &lt;b&gt;Bidder ID:&lt;/b&gt; Name + phone on first bid, device-tied | &lt;b&gt;Real-time:&lt;/b&gt; Every bid pushes to every device instantly | &lt;b&gt;Privacy:&lt;/b&gt; Phone visible to admin only; public sees name + time (min)&lt;/font&gt;"
+          style="text;html=1;align=left;verticalAlign=top;fontSize=9;fontFamily=Helvetica;whiteSpace=wrap;overflow=hidden;fontColor=#FFFFFF;"
+          parent="1" vertex="1">
+          <mxGeometry x="30" y="1540" width="1400" height="30" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
