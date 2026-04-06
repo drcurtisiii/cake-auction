@@ -26,17 +26,38 @@ export default function NewAuctionPage() {
     pickup_location: '',
     thank_you_msg: '',
   });
-  const [imageBase64, setImageBase64] = useState('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
 
-  function processFile(file: File) {
+  async function processFile(file: File) {
     if (!file.type.startsWith('image/')) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const result = e.target?.result as string;
       setImagePreview(result);
-      setImageBase64(result.split(',')[1]);
+      setServerError('');
+      setImageUploading(true);
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: result.split(',')[1] }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(data?.error || 'Failed to upload image');
+        }
+        setImageUrl(data.url);
+        setImagePreview(data.url);
+      } catch (err) {
+        setImageUrl(null);
+        setImagePreview(null);
+        setServerError(err instanceof Error ? err.message : 'Failed to upload image');
+      } finally {
+        setImageUploading(false);
+      }
     };
     reader.readAsDataURL(file);
   }
@@ -97,7 +118,7 @@ export default function NewAuctionPage() {
 
   function removeImage() {
     setImagePreview(null);
-    setImageBase64('');
+    setImageUrl(null);
   }
 
   function updateField(field: string, value: string) {
@@ -130,6 +151,10 @@ export default function NewAuctionPage() {
     e.preventDefault();
     setServerError('');
     if (!validate()) return;
+    if (imageUploading) {
+      setServerError('Wait for the auction image upload to finish.');
+      return;
+    }
 
     setSaving(true);
     try {
@@ -143,7 +168,7 @@ export default function NewAuctionPage() {
         pickup_location: form.pickup_location || undefined,
         description: form.description || undefined,
         thank_you_msg: form.thank_you_msg || undefined,
-        image: imageBase64 || undefined,
+        imgbb_url: imageUrl ?? undefined,
       };
 
       const res = await fetch('/api/auctions', {
@@ -258,6 +283,9 @@ export default function NewAuctionPage() {
                   <p className="text-sm font-medium text-gray-600">
                     Drag and drop, select a file, or press Ctrl+V to paste
                   </p>
+                  {imageUploading && (
+                    <p className="mt-2 text-xs text-[#E8602C]">Uploading image...</p>
+                  )}
                   <button
                     type="button"
                     onClick={handlePasteFromClipboard}

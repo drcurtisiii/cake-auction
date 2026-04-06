@@ -331,11 +331,12 @@ function DetailsTab({
   const [errors, setErrors] = useState<FormErrors>({});
   const [serverError, setServerError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [imageBase64, setImageBase64] = useState('');
+  const [imageUrl, setImageUrl] = useState<string | null>(auction.imgbb_url || null);
   const [imagePreview, setImagePreview] = useState<string | null>(
     auction.imgbb_url || null,
   );
   const [isDragging, setIsDragging] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
 
   const [form, setForm] = useState({
     title: auction.title,
@@ -350,16 +351,37 @@ function DetailsTab({
   });
 
   useEffect(() => {
+    setImageUrl(auction.imgbb_url || null);
     setImagePreview(auction.imgbb_url || null);
   }, [auction.imgbb_url]);
 
-  function processFile(file: File) {
+  async function processFile(file: File) {
     if (!file.type.startsWith('image/')) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const result = e.target?.result as string;
       setImagePreview(result);
-      setImageBase64(result.split(',')[1]);
+      setServerError('');
+      setImageUploading(true);
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: result.split(',')[1] }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(data?.error || 'Failed to upload image');
+        }
+        setImageUrl(data.url);
+        setImagePreview(data.url);
+      } catch (err) {
+        setImageUrl(auction.imgbb_url || null);
+        setImagePreview(auction.imgbb_url || null);
+        setServerError(err instanceof Error ? err.message : 'Failed to upload image');
+      } finally {
+        setImageUploading(false);
+      }
     };
     reader.readAsDataURL(file);
   }
@@ -420,7 +442,7 @@ function DetailsTab({
 
   function removeImage() {
     setImagePreview(null);
-    setImageBase64('');
+    setImageUrl(null);
   }
 
   function updateField(field: string, value: string) {
@@ -454,6 +476,10 @@ function DetailsTab({
     setServerError('');
     setSuccessMsg('');
     if (!validate()) return false;
+    if (imageUploading) {
+      setServerError('Wait for the auction image upload to finish.');
+      return false;
+    }
 
     setSaving(true);
     try {
@@ -468,8 +494,7 @@ function DetailsTab({
         description: form.description || undefined,
         thank_you_msg: form.thank_you_msg || undefined,
         status: publishAfter ? 'published' : undefined,
-        imgbb_url: imageBase64 ? undefined : auction.imgbb_url ?? undefined,
-        image: imageBase64 || undefined,
+        imgbb_url: imageUrl ?? null,
       };
 
       const res = await fetch(`/api/auctions/${auction.id}`, {
@@ -486,7 +511,6 @@ function DetailsTab({
       setSuccessMsg(
         publishAfter ? 'Auction saved and published.' : 'Auction saved successfully.',
       );
-      setImageBase64('');
       await onSaved();
       return true;
     } catch (err) {
@@ -508,7 +532,7 @@ function DetailsTab({
   }, [
     registerPublishHandler,
     form,
-    imageBase64,
+    imageUrl,
     auction.imgbb_url,
     auction.id,
     auction.title,
@@ -602,6 +626,9 @@ function DetailsTab({
                   <p className="text-sm font-medium text-gray-600">
                     Drag and drop, select a file, or press Ctrl+V to paste
                   </p>
+                  {imageUploading && (
+                    <p className="mt-2 text-xs text-[#E8602C]">Uploading image...</p>
+                  )}
                   <button
                     type="button"
                     onClick={handlePasteFromClipboard}

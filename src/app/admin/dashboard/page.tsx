@@ -91,8 +91,19 @@ export default function DashboardPage() {
               key={auction.id}
               onClick={() => router.push(`/admin/auctions/${auction.id}`)}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
+              <div className="flex items-start gap-4">
+                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-100">
+                  {auction.imgbb_url ? (
+                    <img
+                      src={auction.imgbb_url}
+                      alt={auction.title}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : null}
+                </div>
+
+                <div className="flex min-w-0 flex-1 items-start justify-between gap-4">
+                  <div className="min-w-0">
                   <div className="flex items-center gap-3">
                     <h2 className="truncate text-lg font-semibold text-gray-900">
                       {auction.title}
@@ -116,11 +127,12 @@ export default function DashboardPage() {
                       <dd>{formatDate(auction.close_at)}</dd>
                     </div>
                   </dl>
-                </div>
+                  </div>
 
-                <span className="shrink-0 text-sm font-medium text-[#E8602C]">
-                  Edit &rarr;
-                </span>
+                  <span className="shrink-0 text-sm font-medium text-[#E8602C]">
+                    Edit &rarr;
+                  </span>
+                </div>
               </div>
             </Card>
           ))}
