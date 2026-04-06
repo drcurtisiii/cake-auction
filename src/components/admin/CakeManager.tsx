@@ -1,5 +1,5 @@
 'use client';
-// CakeManager v2 - drag/drop + clipboard paste image upload
+// CakeManager v3 - drag/drop + clipboard paste image upload - build 20260406
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Cake } from '@/types';
 import { Button } from '@/components/ui/Button';
