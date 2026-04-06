@@ -1,0 +1,808 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import type { Auction, Cake, Rule, AuctionWithStatus } from '@/types';
+import { enrichAuctionWithStatus } from '@/lib/auction-status';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Badge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+
+type Tab = 'details' | 'cakes' | 'rules';
+
+interface FormErrors {
+  [key: string]: string;
+}
+
+// ─── Helpers ────────────────────────────────────────────
+
+function toLocalDatetime(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function toLocalDate(iso: string | null | undefined): string {
+  if (!iso) return '';
+  return iso.slice(0, 10);
+}
+
+// ─── Main Page ──────────────────────────────────────────
+
+export default function AuctionDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const auctionId = params.id as string;
+
+  const [auction, setAuction] = useState<AuctionWithStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState('');
+  const [activeTab, setActiveTab] = useState<Tab>('details');
+
+  const fetchAuction = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/auctions/${auctionId}`);
+      if (!res.ok) throw new Error('Failed to load auction');
+      const data: Auction = await res.json();
+      setAuction(enrichAuctionWithStatus(data));
+    } catch (err) {
+      setFetchError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  }, [auctionId]);
+
+  useEffect(() => {
+    fetchAuction();
+  }, [fetchAuction]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (fetchError || !auction) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-red-600">{fetchError || 'Auction not found'}</p>
+        <Button
+          variant="secondary"
+          className="mt-4"
+          onClick={() => router.push('/admin/dashboard')}
+        >
+          Back to Dashboard
+        </Button>
+      </div>
+    );
+  }
+
+  const tabs: { key: Tab; label: string }[] = [
+    { key: 'details', label: 'Details' },
+    { key: 'cakes', label: 'Cakes' },
+    { key: 'rules', label: 'Rules' },
+  ];
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-gray-900">{auction.title}</h1>
+          <Badge variant={auction.effectiveStatus}>
+            {auction.effectiveStatus}
+          </Badge>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="mb-8 border-b border-gray-200">
+        <nav className="-mb-px flex gap-6" aria-label="Tabs">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`whitespace-nowrap border-b-2 pb-3 text-sm font-medium transition-colors ${
+                activeTab === tab.key
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'details' && (
+        <DetailsTab auction={auction} onSaved={fetchAuction} />
+      )}
+      {activeTab === 'cakes' && <CakesTab auctionId={auctionId} />}
+      {activeTab === 'rules' && <RulesTab auctionId={auctionId} />}
+    </div>
+  );
+}
+
+// ─── Details Tab ────────────────────────────────────────
+
+function DetailsTab({
+  auction,
+  onSaved,
+}: {
+  auction: AuctionWithStatus;
+  onSaved: () => void;
+}) {
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [serverError, setServerError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const [showPublish, setShowPublish] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const [form, setForm] = useState({
+    title: auction.title,
+    description: auction.description || '',
+    preview_at: toLocalDatetime(auction.preview_at),
+    live_at: toLocalDatetime(auction.live_at),
+    close_at: toLocalDatetime(auction.close_at),
+    pickup_date: toLocalDate(auction.pickup_date),
+    pickup_time: auction.pickup_time || '',
+    pickup_location: auction.pickup_location || '',
+    thank_you_msg: auction.thank_you_msg || '',
+  });
+
+  function updateField(field: string, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setSuccessMsg('');
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  }
+
+  function validate(): boolean {
+    const newErrors: FormErrors = {};
+    if (!form.title.trim()) {
+      newErrors.title = 'Title is required';
+    }
+    if (form.live_at && form.preview_at && form.live_at < form.preview_at) {
+      newErrors.live_at = 'Live date must be after preview date';
+    }
+    if (form.close_at && form.live_at && form.close_at < form.live_at) {
+      newErrors.close_at = 'Close date must be after live date';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setServerError('');
+    setSuccessMsg('');
+    if (!validate()) return;
+
+    setSaving(true);
+    try {
+      const payload = {
+        ...form,
+        preview_at: form.preview_at || undefined,
+        live_at: form.live_at || undefined,
+        close_at: form.close_at || undefined,
+        pickup_date: form.pickup_date || undefined,
+        pickup_time: form.pickup_time || undefined,
+        pickup_location: form.pickup_location || undefined,
+        description: form.description || undefined,
+        thank_you_msg: form.thank_you_msg || undefined,
+      };
+
+      const res = await fetch(`/api/auctions/${auction.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || 'Failed to save');
+      }
+
+      setSuccessMsg('Auction saved successfully.');
+      onSaved();
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handlePublish() {
+    setPublishing(true);
+    try {
+      const res = await fetch(`/api/auctions/${auction.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'published' }),
+      });
+      if (!res.ok) throw new Error('Failed to publish');
+      setShowPublish(false);
+      setSuccessMsg('Auction published.');
+      onSaved();
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : 'Failed to publish');
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/auctions/${auction.id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to delete');
+      router.push('/admin/dashboard');
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : 'Failed to delete');
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <>
+      {serverError && (
+        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {serverError}
+        </div>
+      )}
+      {successMsg && (
+        <div className="mb-6 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+          {successMsg}
+        </div>
+      )}
+
+      <form onSubmit={handleSave} className="space-y-8">
+        {/* Basic Info */}
+        <section>
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Basic Information</h2>
+          <div className="space-y-4">
+            <Input
+              label="Title"
+              required
+              value={form.title}
+              onChange={(e) => updateField('title', e.target.value)}
+              error={errors.title}
+            />
+            <div className="w-full">
+              <label
+                htmlFor="edit-description"
+                className="mb-1.5 block text-sm font-medium text-gray-700"
+              >
+                Description
+              </label>
+              <textarea
+                id="edit-description"
+                rows={3}
+                value={form.description}
+                onChange={(e) => updateField('description', e.target.value)}
+                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Schedule */}
+        <section>
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Schedule</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              label="Preview At"
+              type="datetime-local"
+              value={form.preview_at}
+              onChange={(e) => updateField('preview_at', e.target.value)}
+              error={errors.preview_at}
+            />
+            <Input
+              label="Live At"
+              type="datetime-local"
+              value={form.live_at}
+              onChange={(e) => updateField('live_at', e.target.value)}
+              error={errors.live_at}
+            />
+            <Input
+              label="Close At"
+              type="datetime-local"
+              value={form.close_at}
+              onChange={(e) => updateField('close_at', e.target.value)}
+              error={errors.close_at}
+            />
+          </div>
+        </section>
+
+        {/* Pickup */}
+        <section>
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Pickup Details</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              label="Pickup Date"
+              type="date"
+              value={form.pickup_date}
+              onChange={(e) => updateField('pickup_date', e.target.value)}
+            />
+            <Input
+              label="Pickup Time"
+              type="time"
+              value={form.pickup_time}
+              onChange={(e) => updateField('pickup_time', e.target.value)}
+            />
+            <div className="sm:col-span-2">
+              <Input
+                label="Pickup Location"
+                value={form.pickup_location}
+                onChange={(e) => updateField('pickup_location', e.target.value)}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Thank You */}
+        <section>
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Thank You Message</h2>
+          <div className="w-full">
+            <label
+              htmlFor="edit-thank-you"
+              className="mb-1.5 block text-sm font-medium text-gray-700"
+            >
+              Message
+            </label>
+            <textarea
+              id="edit-thank-you"
+              rows={3}
+              value={form.thank_you_msg}
+              onChange={(e) => updateField('thank_you_msg', e.target.value)}
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            />
+          </div>
+        </section>
+
+        {/* Actions */}
+        <div className="flex flex-wrap items-center gap-3 border-t border-gray-200 pt-6">
+          <Button type="submit" loading={saving}>
+            Save Changes
+          </Button>
+
+          {auction.status === 'draft' && (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setShowPublish(true)}
+            >
+              Publish
+            </Button>
+          )}
+
+          <div className="flex-1" />
+
+          <Button
+            type="button"
+            variant="danger"
+            onClick={() => setShowDelete(true)}
+          >
+            Delete Auction
+          </Button>
+        </div>
+      </form>
+
+      {/* Publish Confirmation Modal */}
+      <Modal
+        isOpen={showPublish}
+        onClose={() => setShowPublish(false)}
+        title="Publish Auction"
+      >
+        <p className="text-sm text-gray-600 mb-6">
+          Publishing this auction will make it visible to bidders based on the
+          schedule you have set. Are you sure you want to publish?
+        </p>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setShowPublish(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handlePublish} loading={publishing}>
+            Publish
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDelete}
+        onClose={() => setShowDelete(false)}
+        title="Delete Auction"
+      >
+        <p className="text-sm text-gray-600 mb-6">
+          This will permanently delete the auction and all associated cakes,
+          bids, and rules. This action cannot be undone.
+        </p>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setShowDelete(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDelete} loading={deleting}>
+            Delete
+          </Button>
+        </div>
+      </Modal>
+    </>
+  );
+}
+
+// ─── Cakes Tab ──────────────────────────────────────────
+
+function CakesTab({ auctionId }: { auctionId: string }) {
+  const [cakes, setCakes] = useState<Cake[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const [newCake, setNewCake] = useState({
+    name: '',
+    flavor: '',
+    description: '',
+    donor_name: '',
+    beneficiary_kid: '',
+    starting_price: '0',
+    min_increment: '5',
+    max_increment: '25',
+  });
+
+  const fetchCakes = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/auctions/${auctionId}/cakes`);
+      if (res.ok) {
+        setCakes(await res.json());
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setLoading(false);
+    }
+  }, [auctionId]);
+
+  useEffect(() => {
+    fetchCakes();
+  }, [fetchCakes]);
+
+  async function handleAddCake(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/auctions/${auctionId}/cakes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          auction_id: auctionId,
+          name: newCake.name,
+          flavor: newCake.flavor || undefined,
+          description: newCake.description || undefined,
+          donor_name: newCake.donor_name || undefined,
+          beneficiary_kid: newCake.beneficiary_kid || undefined,
+          starting_price: Number(newCake.starting_price) || 0,
+          min_increment: Number(newCake.min_increment) || 5,
+          max_increment: Number(newCake.max_increment) || 25,
+          sort_order: cakes.length,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || 'Failed to add cake');
+      }
+      setNewCake({
+        name: '',
+        flavor: '',
+        description: '',
+        donor_name: '',
+        beneficiary_kid: '',
+        starting_price: '0',
+        min_increment: '5',
+        max_increment: '25',
+      });
+      setShowAdd(false);
+      fetchCakes();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add cake');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-800">
+          Cakes ({cakes.length})
+        </h2>
+        <Button size="sm" onClick={() => setShowAdd(true)}>
+          + Add Cake
+        </Button>
+      </div>
+
+      {cakes.length === 0 && !showAdd ? (
+        <div className="rounded-xl border-2 border-dashed border-gray-300 px-6 py-12 text-center">
+          <p className="text-sm text-gray-500">No cakes yet. Add one to get started.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {cakes.map((cake) => (
+            <div
+              key={cake.id}
+              className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm"
+            >
+              <div className="min-w-0">
+                <p className="font-medium text-gray-900 truncate">{cake.name}</p>
+                <p className="text-sm text-gray-500">
+                  {cake.flavor && <span>{cake.flavor}</span>}
+                  {cake.donor_name && (
+                    <span className="ml-2">by {cake.donor_name}</span>
+                  )}
+                </p>
+              </div>
+              <span className="shrink-0 text-sm font-medium text-gray-600">
+                ${cake.starting_price.toFixed(2)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add Cake Modal */}
+      <Modal isOpen={showAdd} onClose={() => setShowAdd(false)} title="Add Cake">
+        {error && (
+          <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+        <form onSubmit={handleAddCake} className="space-y-4">
+          <Input
+            label="Cake Name"
+            required
+            value={newCake.name}
+            onChange={(e) =>
+              setNewCake((prev) => ({ ...prev, name: e.target.value }))
+            }
+          />
+          <Input
+            label="Flavor"
+            value={newCake.flavor}
+            onChange={(e) =>
+              setNewCake((prev) => ({ ...prev, flavor: e.target.value }))
+            }
+          />
+          <Input
+            label="Donor Name"
+            value={newCake.donor_name}
+            onChange={(e) =>
+              setNewCake((prev) => ({ ...prev, donor_name: e.target.value }))
+            }
+          />
+          <Input
+            label="Beneficiary Kid"
+            value={newCake.beneficiary_kid}
+            onChange={(e) =>
+              setNewCake((prev) => ({ ...prev, beneficiary_kid: e.target.value }))
+            }
+          />
+          <div className="grid grid-cols-3 gap-3">
+            <Input
+              label="Start Price"
+              type="number"
+              min="0"
+              step="0.01"
+              value={newCake.starting_price}
+              onChange={(e) =>
+                setNewCake((prev) => ({ ...prev, starting_price: e.target.value }))
+              }
+            />
+            <Input
+              label="Min Increment"
+              type="number"
+              min="0"
+              step="0.01"
+              value={newCake.min_increment}
+              onChange={(e) =>
+                setNewCake((prev) => ({ ...prev, min_increment: e.target.value }))
+              }
+            />
+            <Input
+              label="Max Increment"
+              type="number"
+              min="0"
+              step="0.01"
+              value={newCake.max_increment}
+              onChange={(e) =>
+                setNewCake((prev) => ({ ...prev, max_increment: e.target.value }))
+              }
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setShowAdd(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" loading={saving}>
+              Add Cake
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+}
+
+// ─── Rules Tab ──────────────────────────────────────────
+
+function RulesTab({ auctionId }: { auctionId: string }) {
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newRule, setNewRule] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const fetchRules = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/auctions/${auctionId}/rules`);
+      if (res.ok) {
+        setRules(await res.json());
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setLoading(false);
+    }
+  }, [auctionId]);
+
+  useEffect(() => {
+    fetchRules();
+  }, [fetchRules]);
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newRule.trim()) return;
+    setError('');
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/auctions/${auctionId}/rules`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          auction_id: auctionId,
+          rule_text: newRule.trim(),
+          sort_order: rules.length,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || 'Failed to add rule');
+      }
+      setNewRule('');
+      fetchRules();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add rule');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeleteRule(ruleId: string) {
+    try {
+      await fetch(`/api/auctions/${auctionId}/rules/${ruleId}`, {
+        method: 'DELETE',
+      });
+      fetchRules();
+    } catch {
+      // silently fail
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h2 className="text-lg font-semibold text-gray-800 mb-6">
+        Rules ({rules.length})
+      </h2>
+
+      {/* Add rule form */}
+      {error && (
+        <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+      <form onSubmit={handleAdd} className="mb-6 flex gap-3">
+        <div className="flex-1">
+          <Input
+            value={newRule}
+            onChange={(e) => setNewRule(e.target.value)}
+            placeholder="Enter a new rule..."
+          />
+        </div>
+        <Button type="submit" size="md" loading={saving} disabled={!newRule.trim()}>
+          Add
+        </Button>
+      </form>
+
+      {/* Rules list */}
+      {rules.length === 0 ? (
+        <div className="rounded-xl border-2 border-dashed border-gray-300 px-6 py-12 text-center">
+          <p className="text-sm text-gray-500">
+            No rules yet. Add rules that bidders must agree to.
+          </p>
+        </div>
+      ) : (
+        <ol className="space-y-2">
+          {rules.map((rule, i) => (
+            <li
+              key={rule.id}
+              className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm"
+            >
+              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
+                {i + 1}
+              </span>
+              <p className="flex-1 text-sm text-gray-800">{rule.rule_text}</p>
+              <button
+                onClick={() => handleDeleteRule(rule.id)}
+                className="shrink-0 rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                aria-label="Delete rule"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+}

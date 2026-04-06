@@ -1,0 +1,59 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getDb } from '@/lib/db';
+import { auctionSchema } from '@/lib/validators';
+import { verifyAdmin } from '@/lib/admin-guard';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET() {
+  try {
+    const sql = getDb();
+    const rows = await sql`
+      SELECT * FROM auctions ORDER BY created_at DESC
+    `;
+    return NextResponse.json(rows);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to fetch auctions' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const auth = await verifyAdmin(request);
+    if (!auth.authenticated) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const parsed = auctionSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const data = parsed.data;
+    const sql = getDb();
+
+    const rows = await sql`
+      INSERT INTO auctions (title, description, preview_at, live_at, close_at, status,
+                            pickup_date, pickup_time, pickup_location, thank_you_msg)
+      VALUES (${data.title}, ${data.description ?? null}, ${data.preview_at ?? null},
+              ${data.live_at ?? null}, ${data.close_at ?? null}, ${data.status},
+              ${data.pickup_date ?? null}, ${data.pickup_time ?? null},
+              ${data.pickup_location ?? null}, ${data.thank_you_msg ?? null})
+      RETURNING *
+    `;
+
+    return NextResponse.json(rows[0], { status: 201 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to create auction' },
+      { status: 500 }
+    );
+  }
+}
