@@ -3,6 +3,7 @@ import { getDb } from '@/lib/db';
 import { verifyAdmin } from '@/lib/admin-guard';
 import { cakeSchema } from '@/lib/validators';
 import { uploadImage } from '@/lib/imgbb';
+import { normalizeCake } from '@/lib/cake-normalization';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +36,7 @@ export async function GET(
       return NextResponse.json({ error: 'Cake not found' }, { status: 404 });
     }
 
-    return NextResponse.json(rows[0]);
+    return NextResponse.json(normalizeCake(rows[0]));
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
@@ -93,7 +94,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Cake not found' }, { status: 404 });
     }
 
-    return NextResponse.json(rows[0]);
+    return NextResponse.json(normalizeCake(rows[0]));
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json({ error: 'Validation failed', details: error }, { status: 400 });

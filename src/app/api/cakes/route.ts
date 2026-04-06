@@ -4,6 +4,7 @@ import { verifyAdmin } from '@/lib/admin-guard';
 import { cakeSchema } from '@/lib/validators';
 import { uploadImage } from '@/lib/imgbb';
 import { broadcastNewCake } from '@/lib/pusher-server';
+import { normalizeCake, normalizeCakes } from '@/lib/cake-normalization';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
       ORDER BY c.sort_order ASC
     `;
 
-    return NextResponse.json(cakes);
+    return NextResponse.json(normalizeCakes(cakes));
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
@@ -93,12 +94,12 @@ export async function POST(request: NextRequest) {
 
     // Broadcast new cake via Pusher (non-blocking)
     try {
-      await broadcastNewCake(parsed.auction_id, rows[0]);
+      await broadcastNewCake(parsed.auction_id, normalizeCake(rows[0]));
     } catch (pusherErr) {
       console.error('Pusher broadcastNewCake error (non-fatal):', pusherErr);
     }
 
-    return NextResponse.json(rows[0], { status: 201 });
+    return NextResponse.json(normalizeCake(rows[0]), { status: 201 });
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json({ error: 'Validation failed', details: error }, { status: 400 });
