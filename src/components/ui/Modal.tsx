@@ -43,7 +43,7 @@ export const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4">
       {/* Backdrop */}
       <div
         className={`fixed inset-0 bg-black transition-opacity duration-200 ${
@@ -55,7 +55,7 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Panel */}
       <div
-        className={`relative w-full max-w-lg rounded-xl bg-white p-6 shadow-xl transition-all duration-200 ${
+        className={`relative my-8 flex max-h-[calc(100vh-4rem)] w-full max-w-lg flex-col overflow-hidden rounded-xl bg-white shadow-xl transition-all duration-200 ${
           visible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
         }`}
         role="dialog"
@@ -63,7 +63,7 @@ export const Modal: React.FC<ModalProps> = ({
         aria-labelledby="modal-title"
       >
         {/* Header */}
-        <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
           <h2
             id="modal-title"
             className="text-lg font-semibold text-gray-900"
@@ -93,7 +93,7 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
 
         {/* Content */}
-        <div>{children}</div>
+        <div className="overflow-y-auto px-6 py-4">{children}</div>
       </div>
     </div>
   );
