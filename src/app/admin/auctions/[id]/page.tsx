@@ -2247,6 +2247,7 @@ function RulesTab({ auctionId }: { auctionId: string }) {
   const [newRule, setNewRule] = useState('');
   const [saving, setSaving] = useState(false);
   const [seeding, setSeeding] = useState(false);
+  const [savingDefaults, setSavingDefaults] = useState(false);
   const [error, setError] = useState('');
 
   const fetchRules = useCallback(async () => {
@@ -2353,10 +2354,15 @@ function RulesTab({ auctionId }: { auctionId: string }) {
     setError('');
     setSeeding(true);
     try {
+      const defaultsRes = await fetch('/api/default-rules');
+      const defaultRuleTexts: string[] = defaultsRes.ok
+        ? await defaultsRes.json()
+        : DEFAULT_RULES;
+
       const existingTexts = new Set(
         rules.map((rule) => rule.rule_text.trim().toLowerCase()),
       );
-      const rulesToAdd = DEFAULT_RULES.filter(
+      const rulesToAdd = defaultRuleTexts.filter(
         (ruleText) => !existingTexts.has(ruleText.trim().toLowerCase()),
       );
 
@@ -2386,6 +2392,28 @@ function RulesTab({ auctionId }: { auctionId: string }) {
     }
   }
 
+  async function handleSaveAsDefaults() {
+    setError('');
+    setSavingDefaults(true);
+    try {
+      const res = await fetch('/api/default-rules', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rules: rules.map((rule) => rule.rule_text),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || 'Failed to save default rules');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save default rules');
+    } finally {
+      setSavingDefaults(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -2400,15 +2428,27 @@ function RulesTab({ auctionId }: { auctionId: string }) {
         <h2 className="text-lg font-semibold text-gray-800">
           Rules ({rules.length})
         </h2>
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          loading={seeding}
-          onClick={handleSeedDefaults}
-        >
-          Seed Default Rules
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            loading={savingDefaults}
+            onClick={handleSaveAsDefaults}
+            disabled={rules.length === 0}
+          >
+            Save Rules as Default
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            loading={seeding}
+            onClick={handleSeedDefaults}
+          >
+            Seed Default Rules
+          </Button>
+        </div>
       </div>
 
       {/* Add rule form */}

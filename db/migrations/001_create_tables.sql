@@ -98,6 +98,23 @@ CREATE TABLE rules (
 
 CREATE INDEX idx_rules_auction ON rules(auction_id);
 
+CREATE TABLE default_rules (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  rule_text TEXT NOT NULL,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO default_rules (rule_text, sort_order)
+VALUES
+  ('All sales are final - no refunds on winning bids', 0),
+  ('Winning bidders must pick up their cakes at the designated time and location', 1),
+  ('Payment is due at time of pickup', 2),
+  ('Bidding closes at the posted end time - no exceptions', 3),
+  ('In case of a tie, the earlier bid wins', 4),
+  ('Minimum bid increments must be respected', 5),
+  ('Have fun and bid generously - it''s all for a great cause!', 6);
+
 -- 6. ADMIN SESSIONS
 CREATE TABLE admin_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
