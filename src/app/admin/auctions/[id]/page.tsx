@@ -35,6 +35,16 @@ function toLocalDate(iso: string | null | undefined): string {
   return iso.slice(0, 10);
 }
 
+function addOneHour(time: string): string {
+  if (!time || !time.includes(':')) return '';
+  const [hours, minutes] = time.split(':').map(Number);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return '';
+  const totalMinutes = (hours * 60 + minutes + 60) % (24 * 60);
+  const nextHours = String(Math.floor(totalMinutes / 60)).padStart(2, '0');
+  const nextMinutes = String(totalMinutes % 60).padStart(2, '0');
+  return `${nextHours}:${nextMinutes}`;
+}
+
 // ─── Main Page ──────────────────────────────────────────
 
 export default function AuctionDetailPage() {
@@ -1589,7 +1599,17 @@ function DetailsTab({
   }
 
   function updateField(field: string, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => {
+      if (field === 'pickup_time') {
+        return {
+          ...prev,
+          pickup_time: value,
+          pickup_end_time: addOneHour(value),
+        };
+      }
+
+      return { ...prev, [field]: value };
+    });
     setSuccessMsg('');
     if (errors[field]) {
       setErrors((prev) => {
