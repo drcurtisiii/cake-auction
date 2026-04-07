@@ -15,6 +15,7 @@ export function normalizeCake<T extends CakeLike>(cake: T): T {
     starting_price: toNumber(cake.starting_price),
     min_increment: toNumber(cake.min_increment),
     max_increment: toNumber(cake.max_increment),
+    bid_count: cake.bid_count == null ? cake.bid_count : toNumber(cake.bid_count),
     highest_bid:
       cake.highest_bid == null ? cake.highest_bid : toNumber(cake.highest_bid),
   };

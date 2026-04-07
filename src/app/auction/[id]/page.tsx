@@ -4,10 +4,13 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import type { Auction, Cake, Rule, EffectiveAuctionStatus } from '@/types';
 import { getEffectiveStatus } from '@/lib/auction-status';
+import { generateBidAmounts } from '@/lib/bid-buttons';
 import { Badge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { CakeCard } from '@/components/public/CakeCard';
 import { BidderRegistration } from '@/components/public/BidderRegistration';
+import { BidHistory } from '@/components/public/BidHistory';
 import { usePusherChannel } from '@/hooks/usePusher';
 
 /* ------------------------------------------------------------------ */
@@ -71,6 +74,11 @@ export default function AuctionPage() {
   const [pendingBid, setPendingBid] = useState<{ cakeId: string; amount: number } | null>(null);
   const [bidMessage, setBidMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [placingBid, setPlacingBid] = useState(false);
+  const [selectedCake, setSelectedCake] = useState<(Cake & {
+    currentBid?: number;
+    bidCount?: number;
+    highest_bidder_name?: string | null;
+  }) | null>(null);
 
   /* ── Fetch data ────────────────────────────────────────── */
 
@@ -91,9 +99,15 @@ export default function AuctionPage() {
       setAuction(auctionData);
       // Map highest_bid from the API to currentBid for CakeCard
       const mappedCakes = (Array.isArray(cakesData) ? cakesData : []).map(
-        (c: Cake & { highest_bid?: number; currentBid?: number }) => ({
+        (c: Cake & {
+          highest_bid?: number;
+          currentBid?: number;
+          bid_count?: number;
+          highest_bidder_name?: string | null;
+        }) => ({
           ...c,
           currentBid: c.currentBid ?? (c.highest_bid ? Number(c.highest_bid) : undefined),
+          bidCount: c.bid_count ?? 0,
         }),
       );
       setCakes(mappedCakes);
@@ -165,13 +179,33 @@ export default function AuctionPage() {
 
   useEffect(() => {
     // On 'new-bid': update the cake's current bid in local state
-    const handleNewBid = (data: { cake_id: string; amount: number }) => {
+    const handleNewBid = (data: {
+      cake_id: string;
+      amount: number;
+      bidder_name?: string;
+      bid_time?: string;
+    }) => {
       setCakes((prev) =>
         prev.map((cake) =>
           cake.id === data.cake_id
-            ? { ...cake, currentBid: Number(data.amount) }
+            ? {
+                ...cake,
+                currentBid: Number(data.amount),
+                highest_bidder_name: data.bidder_name ?? cake.highest_bidder_name ?? null,
+                bidCount: (cake.bidCount ?? cake.bid_count ?? 0) + 1,
+              }
             : cake,
         ),
+      );
+      setSelectedCake((prev) =>
+        prev && prev.id === data.cake_id
+          ? {
+              ...prev,
+              currentBid: Number(data.amount),
+              highest_bidder_name: data.bidder_name ?? prev.highest_bidder_name ?? null,
+              bidCount: (prev.bidCount ?? prev.bid_count ?? 0) + 1,
+            }
+          : prev,
       );
     };
 
@@ -249,17 +283,6 @@ export default function AuctionPage() {
           throw new Error(data?.error || 'Failed to place bid');
         }
 
-        setCakes((prev) =>
-          prev.map((cake) =>
-            cake.id === cakeId
-              ? {
-                  ...cake,
-                  currentBid: amount,
-                  bidCount: (cake.bidCount ?? 0) + 1,
-                }
-              : cake,
-          ),
-        );
         setBidMessage({ type: 'success', text: `Bid of $${amount.toFixed(2)} placed.` });
       } catch (err) {
         setBidMessage({
@@ -474,6 +497,7 @@ export default function AuctionPage() {
                 cake={cake}
                 auctionStatus={effectiveStatus}
                 onBidClick={handleBidClick}
+                onOpenDetails={setSelectedCake}
               />
             ))}
           </div>
@@ -542,6 +566,52 @@ export default function AuctionPage() {
         deviceKey={deviceKey}
         onRegistered={handleRegistered}
       />
+
+      <Modal
+        isOpen={selectedCake !== null}
+        onClose={() => setSelectedCake(null)}
+        title={selectedCake?.name || 'Cake Details'}
+      >
+        {selectedCake && (
+          <div className="space-y-4">
+            {selectedCake.imgbb_url && (
+              <img
+                src={selectedCake.imgbb_url}
+                alt={selectedCake.name}
+                className="h-52 w-full rounded-xl object-cover"
+              />
+            )}
+            <div className="space-y-2 text-sm text-gray-600">
+              {selectedCake.flavor && <p><span className="font-medium text-gray-900">Flavor:</span> {selectedCake.flavor}</p>}
+              {selectedCake.donor_name && <p><span className="font-medium text-gray-900">Donated by:</span> {selectedCake.donor_name}</p>}
+              <p><span className="font-medium text-gray-900">Current bid:</span> ${(selectedCake.currentBid ?? selectedCake.starting_price).toFixed(2)}</p>
+              <p><span className="font-medium text-gray-900">Leading bidder:</span> {selectedCake.highest_bidder_name || 'No bids yet'}</p>
+            </div>
+
+            {effectiveStatus === 'live' && (
+              <div className="grid grid-cols-2 gap-2">
+                {generateBidAmounts(
+                  selectedCake.currentBid ?? selectedCake.starting_price,
+                  selectedCake.min_increment,
+                  selectedCake.max_increment,
+                ).map((amount) => (
+                  <button
+                    key={amount}
+                    type="button"
+                    disabled={placingBid}
+                    onClick={() => handleBidClick(selectedCake.id, amount)}
+                    className="rounded-lg bg-[#E8602C] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#C74E1F] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Bid ${amount.toFixed(2)}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <BidHistory cakeId={selectedCake.id} isOpen />
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

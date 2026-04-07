@@ -15,10 +15,12 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest) {
   try {
-    const auctionId = request.nextUrl.searchParams.get('auctionId');
+    const auctionId =
+      request.nextUrl.searchParams.get('auctionId') ||
+      request.nextUrl.searchParams.get('auction_id');
     if (!auctionId) {
       return NextResponse.json(
-        { error: 'auctionId query parameter is required' },
+        { error: 'auctionId or auction_id query parameter is required' },
         { status: 400 }
       );
     }
@@ -28,13 +30,25 @@ export async function GET(request: NextRequest) {
     const cakes = await sql`
       SELECT
         c.*,
-        COALESCE(b.highest_bid, 0) AS highest_bid
+        COALESCE(lb.highest_bid, 0) AS highest_bid,
+        COALESCE(lb.bid_count, 0) AS bid_count,
+        lb.highest_bidder_name
       FROM cakes c
-      LEFT JOIN (
-        SELECT cake_id, MAX(amount) AS highest_bid
-        FROM bids
-        GROUP BY cake_id
-      ) b ON b.cake_id = c.id
+      LEFT JOIN LATERAL (
+        SELECT
+          b2.amount AS highest_bid,
+          bi.name AS highest_bidder_name,
+          (
+            SELECT COUNT(*)::int
+            FROM bids b3
+            WHERE b3.cake_id = c.id
+          ) AS bid_count
+        FROM bids b2
+        JOIN bidders bi ON bi.id = b2.bidder_id
+        WHERE b2.cake_id = c.id
+        ORDER BY b2.amount DESC, b2.bid_time ASC
+        LIMIT 1
+      ) lb ON true
       WHERE c.auction_id = ${auctionId}
         AND (${auth.authenticated} = true OR c.approval_status = 'approved')
       ORDER BY c.sort_order ASC

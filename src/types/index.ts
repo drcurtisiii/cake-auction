@@ -55,6 +55,9 @@ export interface Cake {
   min_increment: number;
   max_increment: number;
   sort_order: number;
+  highest_bid?: number | null;
+  bid_count?: number;
+  highest_bidder_name?: string | null;
   submitted_at?: string;
   approved_at?: string | null;
   created_at: string;

@@ -123,13 +123,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(rows[0]);
     }
 
-    const rows = await sql`
-      SELECT id, name, phone, device_token, created_at
-      FROM bidders
-      ORDER BY created_at DESC
-    `;
-
-    return NextResponse.json(rows);
+    return NextResponse.json(
+      { error: 'auction_id and device_key, or device_token, are required' },
+      { status: 400 },
+    );
   } catch (err) {
     console.error('GET /api/bidders error:', err);
     return NextResponse.json(

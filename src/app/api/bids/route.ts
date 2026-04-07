@@ -161,23 +161,46 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const cakeId = request.nextUrl.searchParams.get('cake_id');
+    const auctionId = request.nextUrl.searchParams.get('auction_id');
+
+    const sql = getDb();
+
+    if (auctionId) {
+      const rows = await sql`
+        SELECT
+          b.id,
+          b.cake_id,
+          b.bidder_id,
+          b.amount,
+          b.bid_time,
+          c.name AS cake_name,
+          bi.name AS bidder_name,
+          bi.phone AS bidder_phone
+        FROM bids b
+        JOIN cakes c ON c.id = b.cake_id
+        JOIN bidders bi ON bi.id = b.bidder_id
+        WHERE c.auction_id = ${auctionId}
+        ORDER BY b.bid_time DESC
+      `;
+
+      return NextResponse.json(rows);
+    }
 
     if (!cakeId) {
       return NextResponse.json(
-        { error: 'cake_id query parameter is required' },
+        { error: 'cake_id or auction_id query parameter is required' },
         { status: 400 },
       );
     }
 
-    const sql = getDb();
-
     const rows = await sql`
       SELECT b.id, b.cake_id, b.bidder_id, b.amount, b.bid_time,
-             bi.name AS bidder_name
+             bi.name AS bidder_name,
+             bi.phone AS bidder_phone
       FROM bids b
       JOIN bidders bi ON bi.id = b.bidder_id
       WHERE b.cake_id = ${cakeId}
-      ORDER BY b.amount DESC
+      ORDER BY b.amount DESC, b.bid_time ASC
     `;
 
     return NextResponse.json(rows);

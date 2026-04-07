@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import type { Auction, Cake, Bid, Bidder } from '@/types';
+import type { Auction } from '@/types';
 
 /* ── Types for results display ───────────────────────── */
 
@@ -14,7 +14,7 @@ interface CakeResult {
 }
 
 interface ResultsData {
-  auction: Auction;
+  auction: Pick<Auction, 'title' | 'thank_you_msg' | 'pickup_date' | 'pickup_time' | 'pickup_location'>;
   grandTotal: number;
   cakeResults: CakeResult[];
   kidTotals: Record<string, number>;
@@ -54,66 +54,37 @@ export default function ResultsPage() {
   useEffect(() => {
     async function fetchResults() {
       try {
-        // Fetch auction, cakes, bids, and bidders in parallel
-        const [auctionRes, cakesRes, bidsRes, biddersRes] = await Promise.all([
-          fetch(`/api/auctions/${auctionId}`),
-          fetch(`/api/cakes?auction_id=${auctionId}`),
-          fetch(`/api/bids?auction_id=${auctionId}`),
-          fetch(`/api/bidders`),
-        ]);
-
-        if (!auctionRes.ok) {
+        const res = await fetch(`/api/results/${auctionId}`);
+        if (!res.ok) {
           setError('Auction not found');
           return;
         }
 
-        const auction: Auction = await auctionRes.json();
-        const cakes: Cake[] = await cakesRes.json();
-        const bids: Bid[] = await bidsRes.json();
-        const bidders: Bidder[] = await biddersRes.json();
+        const payload = await res.json();
+        const cakeResults: CakeResult[] = payload.winners.map((winner: {
+          cake_name: string;
+          winner_name: string | null;
+          winning_bid: number | null;
+          beneficiary_kid: string | null;
+        }) => ({
+          cakeName: winner.cake_name,
+          winnerName: winner.winner_name || 'No bids',
+          winningBid: Number(winner.winning_bid || 0),
+          beneficiaryKid: winner.beneficiary_kid,
+        }));
 
-        // Build a bidder lookup
-        const bidderMap = new Map<string, string>();
-        for (const b of bidders) {
-          bidderMap.set(b.id, b.name);
-        }
+        const kidTotals = Object.fromEntries(
+          (payload.perKidTotals as Array<{ kid_name: string; total_raised: number }>).map(
+            (entry) => [entry.kid_name, Number(entry.total_raised)],
+          ),
+        );
 
-        // For each cake, find the highest bid
-        const cakeResults: CakeResult[] = [];
-        let grandTotal = 0;
-        const kidTotals: Record<string, number> = {};
-
-        for (const cake of cakes) {
-          const cakeBids = bids
-            .filter((b) => b.cake_id === cake.id)
-            .sort((a, b) => b.amount - a.amount);
-
-          if (cakeBids.length > 0) {
-            const topBid = cakeBids[0];
-            const winnerName = bidderMap.get(topBid.bidder_id) || 'Unknown';
-            cakeResults.push({
-              cakeName: cake.name,
-              winnerName,
-              winningBid: topBid.amount,
-              beneficiaryKid: cake.beneficiary_kid || null,
-            });
-            grandTotal += topBid.amount;
-
-            if (cake.beneficiary_kid) {
-              kidTotals[cake.beneficiary_kid] =
-                (kidTotals[cake.beneficiary_kid] || 0) + topBid.amount;
-            }
-          } else {
-            cakeResults.push({
-              cakeName: cake.name,
-              winnerName: 'No bids',
-              winningBid: 0,
-              beneficiaryKid: cake.beneficiary_kid || null,
-            });
-          }
-        }
-
-        setData({ auction, grandTotal, cakeResults, kidTotals });
+        setData({
+          auction: payload.auctionInfo,
+          grandTotal: Number(payload.grandTotal || 0),
+          cakeResults,
+          kidTotals,
+        });
       } catch {
         setError('Failed to load results');
       } finally {

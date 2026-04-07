@@ -6,13 +6,14 @@ import type { Auction, Cake, Rule, AuctionWithStatus } from '@/types';
 import { enrichAuctionWithStatus } from '@/lib/auction-status';
 import { DEFAULT_RULES } from '@/lib/default-rules';
 import { getAppTimeZoneDisplay, utcIsoToLocalDateTimeInput } from '@/lib/timezone';
+import { usePusherChannel } from '@/hooks/usePusher';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-type Tab = 'details' | 'cakes' | 'rules';
+type Tab = 'details' | 'cakes' | 'rules' | 'results';
 
 interface FormErrors {
   [key: string]: string;
@@ -152,6 +153,7 @@ export default function AuctionDetailPage() {
     { key: 'details', label: 'Details' },
     { key: 'cakes', label: 'Cakes' },
     { key: 'rules', label: 'Rules' },
+    { key: 'results', label: 'Results' },
   ];
 
   return (
@@ -197,6 +199,7 @@ export default function AuctionDetailPage() {
       )}
       {activeTab === 'cakes' && <CakesTab auctionId={auctionId} />}
       {activeTab === 'rules' && <RulesTab auctionId={auctionId} />}
+      {activeTab === 'results' && <ResultsTab auctionId={auctionId} />}
 
       <AuctionActionBar
         activeTab={activeTab}
@@ -319,6 +322,162 @@ function AuctionActionBar({
           Delete Auction
         </Button>
       </div>
+    </div>
+  );
+}
+
+function ResultsTab({ auctionId }: { auctionId: string }) {
+  const { bind, unbind } = usePusherChannel(auctionId);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [report, setReport] = useState<{
+    winners: Array<{
+      cake_id: string;
+      cake_name: string;
+      beneficiary_kid: string | null;
+      winner_name: string | null;
+      winner_phone: string | null;
+      winning_bid: number | null;
+    }>;
+    allBids: Array<{
+      id: string;
+      cake_id: string;
+      cake_name: string;
+      bidder_name: string;
+      bidder_phone: string;
+      amount: number;
+      bid_time: string;
+    }>;
+    grandTotal: number;
+  } | null>(null);
+
+  const fetchReport = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/reports/${auctionId}`);
+      if (!res.ok) throw new Error('Failed to load results');
+      const data = await res.json();
+      setReport(data);
+      setError('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load results');
+    } finally {
+      setLoading(false);
+    }
+  }, [auctionId]);
+
+  useEffect(() => {
+    fetchReport();
+  }, [fetchReport]);
+
+  useEffect(() => {
+    const refresh = () => {
+      void fetchReport();
+    };
+    bind('new-bid', refresh);
+    bind('new-cake', refresh);
+    return () => {
+      unbind('new-bid', refresh);
+      unbind('new-cake', refresh);
+    };
+  }, [bind, unbind, fetchReport]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error || !report) {
+    return (
+      <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+        {error || 'Failed to load results'}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-800">Live Results</h2>
+          <p className="text-sm text-gray-500">
+            Updates automatically as bids come in.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="secondary" size="sm" onClick={() => window.print()}>
+            Print / PDF
+          </Button>
+          <Button type="button" variant="secondary" size="sm" onClick={() => window.open(`/admin/auctions/${auctionId}/reports`, '_blank')}>
+            Open Full Report
+          </Button>
+        </div>
+      </div>
+
+      <div className="rounded-2xl bg-gradient-to-br from-[#E8602C] to-[#1B3C6D] px-6 py-8 text-white shadow-lg">
+        <p className="text-sm uppercase tracking-wide text-[#E8EEF6]">Grand Total Raised</p>
+        <p className="mt-2 text-4xl font-extrabold">${Number(report.grandTotal).toFixed(2)}</p>
+      </div>
+
+      <section>
+        <h3 className="mb-3 text-base font-semibold text-gray-800">Current Winners</h3>
+        <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Cake</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Leader</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Phone</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Bid</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Beneficiary</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 bg-white">
+              {report.winners.map((winner) => (
+                <tr key={winner.cake_id}>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">{winner.cake_name}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{winner.winner_name || '--'}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{winner.winner_phone || '--'}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium text-gray-900">
+                    {winner.winning_bid != null ? `$${Number(winner.winning_bid).toFixed(2)}` : '--'}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{winner.beneficiary_kid || '--'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h3 className="mb-3 text-base font-semibold text-gray-800">Recent Bids</h3>
+        <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Time</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Cake</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Bidder</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Phone</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Amount</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 bg-white">
+              {report.allBids.map((bid) => (
+                <tr key={bid.id}>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{new Date(bid.bid_time).toLocaleString()}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">{bid.cake_name}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{bid.bidder_name}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{bid.bidder_phone}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium text-gray-900">${Number(bid.amount).toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }

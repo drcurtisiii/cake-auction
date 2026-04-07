@@ -8,6 +8,7 @@ interface CakeCardProps {
   cake: Cake & { currentBid?: number; bidCount?: number };
   auctionStatus: EffectiveAuctionStatus;
   onBidClick: (cakeId: string, amount: number) => void;
+  onOpenDetails: (cake: Cake & { currentBid?: number; bidCount?: number }) => void;
 }
 
 /** Random warm background for the placeholder when there is no image */
@@ -32,6 +33,7 @@ export const CakeCard: React.FC<CakeCardProps> = ({
   cake,
   auctionStatus,
   onBidClick,
+  onOpenDetails,
 }) => {
   const currentPrice = cake.currentBid ?? cake.starting_price;
   const bidAmounts = generateBidAmounts(
@@ -44,6 +46,15 @@ export const CakeCard: React.FC<CakeCardProps> = ({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpenDetails(cake)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onOpenDetails(cake);
+        }
+      }}
       className="group flex flex-col overflow-hidden rounded-2xl shadow-sm transition-shadow hover:shadow-lg"
       style={{
         border: '1px solid var(--public-border)',
@@ -102,6 +113,13 @@ export const CakeCard: React.FC<CakeCardProps> = ({
           </p>
         )}
 
+        {cake.highest_bidder_name && (
+          <p className="text-sm" style={{ color: 'var(--public-text-muted)' }}>
+            <span className="font-medium" style={{ color: 'var(--public-text)' }}>Leading bidder:</span>{' '}
+            {cake.highest_bidder_name}
+          </p>
+        )}
+
         {cake.beneficiary_kid && (
           <p className="text-sm font-medium text-rose-600">
             Supporting: {cake.beneficiary_kid}
@@ -129,7 +147,10 @@ export const CakeCard: React.FC<CakeCardProps> = ({
               <button
                 key={amount}
                 disabled={!isLive}
-                onClick={() => onBidClick(cake.id, amount)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onBidClick(cake.id, amount);
+                }}
                 className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
                   isLive
                     ? 'bg-[#E8602C] text-white hover:bg-[#C74E1F] active:bg-[#A84218]'
