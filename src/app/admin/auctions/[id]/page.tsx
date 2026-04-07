@@ -582,9 +582,31 @@ function DetailsTab({
   });
 
   useEffect(() => {
+    setForm({
+      title: auction.title,
+      description: auction.description || '',
+      preview_at: toLocalDatetime(auction.preview_at),
+      live_at: toLocalDatetime(auction.live_at),
+      close_at: toLocalDatetime(auction.close_at),
+      pickup_date: toLocalDate(auction.pickup_date),
+      pickup_time: auction.pickup_time || '',
+      pickup_location: auction.pickup_location || '',
+      thank_you_msg: auction.thank_you_msg || '',
+    });
     setImageUrl(auction.imgbb_url || null);
     setImagePreview(auction.imgbb_url || null);
-  }, [auction.imgbb_url]);
+  }, [
+    auction.title,
+    auction.description,
+    auction.preview_at,
+    auction.live_at,
+    auction.close_at,
+    auction.pickup_date,
+    auction.pickup_time,
+    auction.pickup_location,
+    auction.thank_you_msg,
+    auction.imgbb_url,
+  ]);
 
   async function processFile(file: File) {
     if (!file.type.startsWith('image/')) return;
