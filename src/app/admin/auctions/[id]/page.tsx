@@ -194,42 +194,69 @@ export default function AuctionDetailPage() {
     const pickupDate = auction.pickup_date || 'TBD';
     const pickupTime = auction.pickup_time || 'TBD';
     const pickupLocation = auction.pickup_location || 'TBD';
+    const intro =
+      auction.description ||
+      'Join us for a fun cake auction supporting our students.';
 
     const text = [
-      `Cake Submissions`,
-      auction.title,
-      auction.description || '',
+      `🍰🏫 You're Invited: ${auction.title}`,
+      intro,
       '',
-      `View auction: ${auctionUrl}`,
-      `Add auction to calendar: ${calendarUrl}`,
-      `Submit a cake: ${submissionUrl}`,
-      `Cake submission deadline: ${submissionDeadline}`,
+      `🎂 Want to donate a cake? Submit one here: ${submissionUrl}`,
+      `🗓️ Cake submission deadline: ${submissionDeadline}`,
       '',
-      `Preview opens: ${previewTime}`,
-      `Bidding goes live: ${liveTime}`,
-      `Bidding closes: ${closeTime}`,
-      `Pickup date: ${pickupDate}`,
-      `Pickup time: ${pickupTime}`,
-      `Pickup location: ${pickupLocation}`,
+      `👀 Preview opens: ${previewTime}`,
+      `🔨 Bidding goes live: ${liveTime}`,
+      `⏰ Bidding closes: ${closeTime}`,
+      '',
+      `📍 Pickup date: ${pickupDate}`,
+      `🕕 Pickup time: ${pickupTime}`,
+      `🚗 Pickup location: ${pickupLocation}`,
+      '',
+      `🔗 View auction: ${auctionUrl}`,
+      `📅 Add to calendar: ${calendarUrl}`,
+      '',
+      `Thank you for supporting our students!`,
     ]
       .filter(Boolean)
       .join('\n');
 
     const html = `
-      <div style="font-family:Arial,sans-serif;line-height:1.5;color:#1f2937;">
-        <p style="margin:0 0 12px;font-size:18px;"><strong> Cake Submissions</strong></p>
-        <p style="margin:0 0 8px;font-size:20px;font-weight:700;color:#1b3c6d;">${escapeHtml(auction.title)}</p>
-        ${auction.description ? `<p style="margin:0 0 16px;">${escapeHtml(auction.description)}</p>` : ''}
-        <p style="margin:0 0 8px;"><strong> View auction:</strong> <a href="${auctionUrl}">Open auction page</a></p>
-        <p style="margin:0 0 8px;"><strong> Add to calendar:</strong> <a href="${calendarUrl}">Add this auction to your calendar</a></p>
-        <p style="margin:0 0 8px;"><strong> Submit a cake:</strong> <a href="${submissionUrl}">Open cake submission form</a></p>
-        <p style="margin:0 0 16px;"><strong> Cake submission deadline:</strong> ${escapeHtml(submissionDeadline)}</p>
-        <p style="margin:0 0 4px;"><strong> Preview opens:</strong> ${escapeHtml(previewTime)}</p>
-        <p style="margin:0 0 4px;"><strong> Bidding goes live:</strong> ${escapeHtml(liveTime)}</p>
-        <p style="margin:0 0 4px;"><strong> Bidding closes:</strong> ${escapeHtml(closeTime)}</p>
-        <p style="margin:0 0 4px;"><strong> Pickup date:</strong> ${escapeHtml(pickupDate)}</p>
-        <p style="margin:0 0 4px;"><strong> Pickup time:</strong> ${escapeHtml(pickupTime)}</p>
-        <p style="margin:0;"><strong> Pickup location:</strong> ${escapeHtml(pickupLocation)}</p>
+      <div style="font-family:Arial,sans-serif;line-height:1.55;color:#1f2937;max-width:640px;">
+        <div style="border-radius:20px;background:linear-gradient(135deg,#fff6eb 0%,#eef4ff 100%);border:1px solid #f3d7bf;padding:24px;">
+          <p style="margin:0 0 8px;font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#e8602c;">🍰 School Cake Auction</p>
+          <p style="margin:0 0 10px;font-size:28px;font-weight:800;color:#1b3c6d;">${escapeHtml(auction.title)}</p>
+          <p style="margin:0 0 18px;font-size:16px;">${escapeHtml(intro)}</p>
+
+          <div style="margin:0 0 18px;border-radius:16px;background:#ffffff;padding:16px;border:1px solid #e5e7eb;">
+            <p style="margin:0 0 10px;font-size:18px;font-weight:700;color:#1b3c6d;">🎂 Want to donate a cake?</p>
+            <p style="margin:0 0 10px;">Use the submission form below to send in your cake details and photo for admin approval.</p>
+            <p style="margin:0;"><a href="${submissionUrl}" style="display:inline-block;border-radius:999px;background:#e8602c;color:#ffffff;text-decoration:none;padding:10px 16px;font-weight:700;">Open Cake Submission Form</a></p>
+            <p style="margin:12px 0 0;font-size:14px;color:#6b7280;"><strong>Submission deadline:</strong> ${escapeHtml(submissionDeadline)}</p>
+          </div>
+
+          <div style="margin:0 0 18px;border-radius:16px;background:#ffffff;padding:16px;border:1px solid #e5e7eb;">
+            <p style="margin:0 0 10px;font-size:18px;font-weight:700;color:#1b3c6d;">📣 Auction Timeline</p>
+            <p style="margin:0 0 6px;"><strong>👀 Preview opens:</strong> ${escapeHtml(previewTime)}</p>
+            <p style="margin:0 0 6px;"><strong>🔨 Bidding goes live:</strong> ${escapeHtml(liveTime)}</p>
+            <p style="margin:0;"><strong>⏰ Bidding closes:</strong> ${escapeHtml(closeTime)}</p>
+          </div>
+
+          <div style="margin:0 0 18px;border-radius:16px;background:#ffffff;padding:16px;border:1px solid #e5e7eb;">
+            <p style="margin:0 0 10px;font-size:18px;font-weight:700;color:#1b3c6d;">📍 Pickup Details</p>
+            <p style="margin:0 0 6px;"><strong>Date:</strong> ${escapeHtml(pickupDate)}</p>
+            <p style="margin:0 0 6px;"><strong>Time:</strong> ${escapeHtml(pickupTime)}</p>
+            <p style="margin:0;"><strong>Location:</strong> ${escapeHtml(pickupLocation)}</p>
+          </div>
+
+          <div style="margin:0 0 12px;border-radius:16px;background:#ffffff;padding:16px;border:1px solid #e5e7eb;">
+            <p style="margin:0 0 10px;font-size:18px;font-weight:700;color:#1b3c6d;">🔗 Quick Links</p>
+            <p style="margin:0 0 8px;"><a href="${auctionUrl}">View Auction Page</a></p>
+            <p style="margin:0;"><a href="${calendarUrl}">Add Auction to Calendar</a></p>
+          </div>
+
+          <p style="margin:14px 0 0;font-size:15px;font-weight:700;color:#1b3c6d;">Thank you for supporting our students! 💙🧁</p>
+        </div>
       </div>
     `.trim();
 
