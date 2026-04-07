@@ -45,8 +45,10 @@ export default function AuctionDetailPage() {
   const [actionSuccess, setActionSuccess] = useState('');
   const [showPublish, setShowPublish] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showResetTest, setShowResetTest] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [resettingTest, setResettingTest] = useState(false);
   const detailsPublishHandlerRef = useRef<(() => Promise<boolean>) | null>(null);
 
   const fetchAuction = useCallback(async () => {
@@ -123,6 +125,32 @@ export default function AuctionDetailPage() {
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Failed to delete');
       setDeleting(false);
+    }
+  }
+
+  async function handleResetTestAuction() {
+    if (!auction) return;
+    setActionError('');
+    setActionSuccess('');
+    setResettingTest(true);
+    try {
+      const res = await fetch(`/api/auctions/${auction.id}/reset-test`, {
+        method: 'POST',
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error('Admin session expired. Return to /admin and log in again.');
+        }
+        throw new Error(data?.error || 'Failed to reset auction');
+      }
+      setShowResetTest(false);
+      setActionSuccess(data?.message || 'Auction reset for testing.');
+      await fetchAuction();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to reset auction');
+    } finally {
+      setResettingTest(false);
     }
   }
 
@@ -208,8 +236,10 @@ export default function AuctionDetailPage() {
         actionSuccess={actionSuccess}
         publishing={publishing}
         deleting={deleting}
+        resettingTest={resettingTest}
         onPublish={() => setShowPublish(true)}
         onDelete={() => setShowDelete(true)}
+        onResetTest={() => setShowResetTest(true)}
       />
 
       <Modal
@@ -249,6 +279,26 @@ export default function AuctionDetailPage() {
           </Button>
         </div>
       </Modal>
+
+      <Modal
+        isOpen={showResetTest}
+        onClose={() => setShowResetTest(false)}
+        title="Reset Auction For Testing"
+      >
+        <p className="mb-6 text-sm text-gray-600">
+          This test helper will delete all bids for this auction, set preview to now,
+          set live to 2 minutes from now, set close to 5 minutes from now, and set pickup
+          time to 1 hour from now. This is for debugging only.
+        </p>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setShowResetTest(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleResetTestAuction} loading={resettingTest}>
+            Reset Auction
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
@@ -260,8 +310,10 @@ function AuctionActionBar({
   actionSuccess,
   publishing,
   deleting,
+  resettingTest,
   onPublish,
   onDelete,
+  onResetTest,
 }: {
   activeTab: Tab;
   auction: AuctionWithStatus;
@@ -269,8 +321,10 @@ function AuctionActionBar({
   actionSuccess: string;
   publishing: boolean;
   deleting: boolean;
+  resettingTest: boolean;
   onPublish: () => void;
   onDelete: () => void;
+  onResetTest: () => void;
 }) {
   const saveDisabled = activeTab !== 'details';
 
@@ -310,6 +364,16 @@ function AuctionActionBar({
             Publish
           </Button>
         )}
+
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onResetTest}
+          loading={resettingTest}
+          title="Temporary testing helper. Remove after debugging."
+        >
+          Reset Auction (Test)
+        </Button>
 
         <div className="flex-1" />
 
