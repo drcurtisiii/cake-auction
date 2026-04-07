@@ -229,17 +229,14 @@ export default function AuctionDetailPage() {
           <p style="margin:0 0 18px;font-size:16px;">${escapeHtml(intro)}</p>
 
           <div style="margin:0 0 18px;border-radius:16px;background:#ffffff;padding:16px;border:1px solid #e5e7eb;">
-            <p style="margin:0 0 10px;font-size:18px;font-weight:700;color:#1b3c6d;">🎂 Want to donate a cake?</p>
-            <p style="margin:0 0 10px;">Use the submission form below to send in your cake details and photo for admin approval.</p>
-            <p style="margin:0;"><a href="${submissionUrl}" style="display:inline-block;border-radius:999px;background:#e8602c;color:#ffffff;text-decoration:none;padding:10px 16px;font-weight:700;">Open Cake Submission Form</a></p>
-            <p style="margin:12px 0 0;font-size:14px;color:#6b7280;"><strong>Submission deadline:</strong> ${escapeHtml(submissionDeadline)}</p>
-          </div>
-
-          <div style="margin:0 0 18px;border-radius:16px;background:#ffffff;padding:16px;border:1px solid #e5e7eb;">
             <p style="margin:0 0 10px;font-size:18px;font-weight:700;color:#1b3c6d;">📣 Auction Timeline</p>
             <p style="margin:0 0 6px;"><strong>👀 Preview opens:</strong> ${escapeHtml(previewTime)}</p>
             <p style="margin:0 0 6px;"><strong>🔨 Bidding goes live:</strong> ${escapeHtml(liveTime)}</p>
             <p style="margin:0;"><strong>⏰ Bidding closes:</strong> ${escapeHtml(closeTime)}</p>
+            <div style="margin:14px 0 0;display:flex;flex-wrap:wrap;gap:10px;">
+              <a href="${auctionUrl}" style="display:inline-block;border-radius:999px;background:#1b3c6d;color:#ffffff;text-decoration:none;padding:10px 16px;font-weight:700;">View Auction Page</a>
+              <a href="${calendarUrl}" style="display:inline-block;border-radius:999px;background:#e8602c;color:#ffffff;text-decoration:none;padding:10px 16px;font-weight:700;">Add to Calendar</a>
+            </div>
           </div>
 
           <div style="margin:0 0 18px;border-radius:16px;background:#ffffff;padding:16px;border:1px solid #e5e7eb;">
@@ -250,9 +247,10 @@ export default function AuctionDetailPage() {
           </div>
 
           <div style="margin:0 0 12px;border-radius:16px;background:#ffffff;padding:16px;border:1px solid #e5e7eb;">
-            <p style="margin:0 0 10px;font-size:18px;font-weight:700;color:#1b3c6d;">🔗 Quick Links</p>
-            <p style="margin:0 0 8px;"><a href="${auctionUrl}">View Auction Page</a></p>
-            <p style="margin:0;"><a href="${calendarUrl}">Add Auction to Calendar</a></p>
+            <p style="margin:0 0 10px;font-size:18px;font-weight:700;color:#1b3c6d;">🎂 Want to donate a cake?</p>
+            <p style="margin:0 0 10px;">Use the submission form below to send in your cake details and photo for admin approval.</p>
+            <p style="margin:0;"><a href="${submissionUrl}" style="display:inline-block;border-radius:999px;background:#e8602c;color:#ffffff;text-decoration:none;padding:10px 16px;font-weight:700;">Open Cake Submission Form</a></p>
+            <p style="margin:12px 0 0;font-size:14px;color:#6b7280;"><strong>Submission deadline:</strong> ${escapeHtml(submissionDeadline)}</p>
           </div>
 
           <p style="margin:14px 0 0;font-size:15px;font-weight:700;color:#1b3c6d;">Thank you for supporting our students! 💙🧁</p>
