@@ -186,34 +186,78 @@ export default function AuctionDetailPage() {
     const calendarUrl = `${siteUrl}/api/calendar/${auction.id}`;
     const submissionUrl = `${siteUrl}/cakeregistration?auction=${auction.id}`;
     const submissionDeadline = auction.cake_submission_close_at
-      ? new Date(auction.cake_submission_close_at).toLocaleString()
+      ? formatInAppTimeZone(auction.cake_submission_close_at)
       : 'Default cutoff applies';
+    const previewTime = auction.preview_at ? formatInAppTimeZone(auction.preview_at) : 'TBD';
+    const liveTime = auction.live_at ? formatInAppTimeZone(auction.live_at) : 'TBD';
+    const closeTime = auction.close_at ? formatInAppTimeZone(auction.close_at) : 'TBD';
+    const pickupDate = auction.pickup_date || 'TBD';
+    const pickupTime = auction.pickup_time || 'TBD';
+    const pickupLocation = auction.pickup_location || 'TBD';
 
     const text = [
+      `Cake Submissions`,
       auction.title,
       auction.description || '',
       '',
-      `Auction link: ${auctionUrl}`,
-      `Add to calendar: ${calendarUrl}`,
-      `Cake submission link: ${submissionUrl}`,
+      `View auction: ${auctionUrl}`,
+      `Add auction to calendar: ${calendarUrl}`,
+      `Submit a cake: ${submissionUrl}`,
       `Cake submission deadline: ${submissionDeadline}`,
-      `Preview: ${auction.preview_at ? new Date(auction.preview_at).toLocaleString() : 'TBD'}`,
-      `Live: ${auction.live_at ? new Date(auction.live_at).toLocaleString() : 'TBD'}`,
-      `Close: ${auction.close_at ? new Date(auction.close_at).toLocaleString() : 'TBD'}`,
-      `Pickup date: ${auction.pickup_date || 'TBD'}`,
-      `Pickup time: ${auction.pickup_time || 'TBD'}`,
-      `Pickup location: ${auction.pickup_location || 'TBD'}`,
+      '',
+      `Preview opens: ${previewTime}`,
+      `Bidding goes live: ${liveTime}`,
+      `Bidding closes: ${closeTime}`,
+      `Pickup date: ${pickupDate}`,
+      `Pickup time: ${pickupTime}`,
+      `Pickup location: ${pickupLocation}`,
     ]
       .filter(Boolean)
       .join('\n');
 
+    const html = `
+      <div style="font-family:Arial,sans-serif;line-height:1.5;color:#1f2937;">
+        <p style="margin:0 0 12px;font-size:18px;"><strong> Cake Submissions</strong></p>
+        <p style="margin:0 0 8px;font-size:20px;font-weight:700;color:#1b3c6d;">${escapeHtml(auction.title)}</p>
+        ${auction.description ? `<p style="margin:0 0 16px;">${escapeHtml(auction.description)}</p>` : ''}
+        <p style="margin:0 0 8px;"><strong> View auction:</strong> <a href="${auctionUrl}">Open auction page</a></p>
+        <p style="margin:0 0 8px;"><strong> Add to calendar:</strong> <a href="${calendarUrl}">Add this auction to your calendar</a></p>
+        <p style="margin:0 0 8px;"><strong> Submit a cake:</strong> <a href="${submissionUrl}">Open cake submission form</a></p>
+        <p style="margin:0 0 16px;"><strong> Cake submission deadline:</strong> ${escapeHtml(submissionDeadline)}</p>
+        <p style="margin:0 0 4px;"><strong> Preview opens:</strong> ${escapeHtml(previewTime)}</p>
+        <p style="margin:0 0 4px;"><strong> Bidding goes live:</strong> ${escapeHtml(liveTime)}</p>
+        <p style="margin:0 0 4px;"><strong> Bidding closes:</strong> ${escapeHtml(closeTime)}</p>
+        <p style="margin:0 0 4px;"><strong> Pickup date:</strong> ${escapeHtml(pickupDate)}</p>
+        <p style="margin:0 0 4px;"><strong> Pickup time:</strong> ${escapeHtml(pickupTime)}</p>
+        <p style="margin:0;"><strong> Pickup location:</strong> ${escapeHtml(pickupLocation)}</p>
+      </div>
+    `.trim();
+
     try {
-      await navigator.clipboard.writeText(text);
+      if (typeof ClipboardItem !== 'undefined' && navigator.clipboard.write) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/plain': new Blob([text], { type: 'text/plain' }),
+            'text/html': new Blob([html], { type: 'text/html' }),
+          }),
+        ]);
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
       setActionError('');
       setActionSuccess('Auction details copied.');
     } catch {
       setActionError('Failed to copy auction details.');
     }
+  }
+
+  function escapeHtml(value: string) {
+    return value
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
   }
 
   if (loading) {
