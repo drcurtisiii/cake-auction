@@ -96,13 +96,10 @@ export async function GET(request: NextRequest) {
       `;
 
       if (rows.length === 0) {
-        return NextResponse.json(
-          { error: 'Bidder not found' },
-          { status: 404 },
-        );
+        return NextResponse.json({ registered: false });
       }
 
-      return NextResponse.json(rows[0]);
+      return NextResponse.json({ registered: true, bidder: rows[0] });
     }
 
     if (deviceToken) {

@@ -111,6 +111,9 @@ export default function AuctionPage() {
         }),
       );
       setCakes(mappedCakes);
+      setSelectedCake((prev) =>
+        prev ? mappedCakes.find((cake) => cake.id === prev.id) ?? null : prev,
+      );
       setRules(Array.isArray(rulesData) ? rulesData : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load auction');
@@ -145,7 +148,8 @@ export default function AuctionPage() {
           `/api/bidders?auction_id=${encodeURIComponent(auctionId)}&device_key=${encodeURIComponent(deviceKey)}`,
         );
 
-        if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.registered || !data?.bidder) {
           if (!cancelled) {
             setBidder(null);
             localStorage.removeItem(bidderStorageKey);
@@ -153,11 +157,10 @@ export default function AuctionPage() {
           return;
         }
 
-        const data = await res.json();
         if (!cancelled) {
-          setBidder(data);
-          if (data?.id && storedBidderId !== data.id) {
-            localStorage.setItem(bidderStorageKey, data.id);
+          setBidder(data.bidder);
+          if (data.bidder.id && storedBidderId !== data.bidder.id) {
+            localStorage.setItem(bidderStorageKey, data.bidder.id);
           }
         }
       } catch {
@@ -178,35 +181,8 @@ export default function AuctionPage() {
   const { bind, unbind } = usePusherChannel(auctionId);
 
   useEffect(() => {
-    // On 'new-bid': update the cake's current bid in local state
-    const handleNewBid = (data: {
-      cake_id: string;
-      amount: number;
-      bidder_name?: string;
-      bid_time?: string;
-    }) => {
-      setCakes((prev) =>
-        prev.map((cake) =>
-          cake.id === data.cake_id
-            ? {
-                ...cake,
-                currentBid: Number(data.amount),
-                highest_bidder_name: data.bidder_name ?? cake.highest_bidder_name ?? null,
-                bidCount: (cake.bidCount ?? cake.bid_count ?? 0) + 1,
-              }
-            : cake,
-        ),
-      );
-      setSelectedCake((prev) =>
-        prev && prev.id === data.cake_id
-          ? {
-              ...prev,
-              currentBid: Number(data.amount),
-              highest_bidder_name: data.bidder_name ?? prev.highest_bidder_name ?? null,
-              bidCount: (prev.bidCount ?? prev.bid_count ?? 0) + 1,
-            }
-          : prev,
-      );
+    const handleNewBid = () => {
+      void fetchData();
     };
 
     // On 'auction-state-change': re-fetch auction data
@@ -280,9 +256,11 @@ export default function AuctionPage() {
 
         const data = await res.json().catch(() => null);
         if (!res.ok) {
+          await fetchData();
           throw new Error(data?.error || 'Failed to place bid');
         }
 
+        await fetchData();
         setBidMessage({ type: 'success', text: `Bid of $${amount.toFixed(2)} placed.` });
       } catch (err) {
         setBidMessage({
@@ -293,7 +271,7 @@ export default function AuctionPage() {
         setPlacingBid(false);
       }
     },
-    [deviceKey],
+    [deviceKey, fetchData],
   );
 
   const handleBidClick = useCallback(
