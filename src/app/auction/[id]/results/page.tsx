@@ -8,6 +8,7 @@ import type { Auction } from '@/types';
 
 interface CakeResult {
   cakeName: string;
+  imageUrl: string | null;
   winnerName: string;
   winningBid: number;
   beneficiaryKid: string | null;
@@ -63,11 +64,13 @@ export default function ResultsPage() {
         const payload = await res.json();
         const cakeResults: CakeResult[] = payload.winners.map((winner: {
           cake_name: string;
+          imgbb_url: string | null;
           winner_name: string | null;
           winning_bid: number | null;
           beneficiary_kid: string | null;
         }) => ({
           cakeName: winner.cake_name,
+          imageUrl: winner.imgbb_url,
           winnerName: winner.winner_name || 'No bids',
           winningBid: Number(winner.winning_bid || 0),
           beneficiaryKid: winner.beneficiary_kid,
@@ -227,38 +230,66 @@ export default function ResultsPage() {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'flex-start',
-              flexWrap: 'wrap',
-              gap: '0.5rem',
+              gap: '1rem',
             }}
           >
-            <div>
-              <p
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '1rem',
+                minWidth: 0,
+                flex: 1,
+              }}
+            >
+              <div
                 style={{
-                  margin: 0,
-                  fontWeight: 600,
-                  color: 'var(--public-text)',
-                  fontSize: '1.05rem',
+                  width: '84px',
+                  height: '84px',
+                  flexShrink: 0,
+                  overflow: 'hidden',
+                  borderRadius: '0.75rem',
+                  background: 'var(--public-panel-soft)',
+                  border: '1px solid var(--public-border)',
                 }}
               >
-                {cr.cakeName}
-              </p>
-              <p style={{ margin: '0.2rem 0 0', color: 'var(--public-text)', fontSize: '0.9rem' }}>
-                {cr.winnerName !== 'No bids'
-                  ? `Won by ${cr.winnerName}`
-                  : 'No bids received'}
-              </p>
-              {cr.beneficiaryKid && (
+                {cr.imageUrl ? (
+                  <img
+                    src={cr.imageUrl}
+                    alt={cr.cakeName}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : null}
+              </div>
+              <div style={{ minWidth: 0 }}>
                 <p
                   style={{
-                    margin: '0.3rem 0 0',
-                    fontSize: '0.8rem',
-                    color: 'var(--public-text-muted)',
-                    fontStyle: 'italic',
+                    margin: 0,
+                    fontWeight: 600,
+                    color: 'var(--public-text)',
+                    fontSize: '1.05rem',
                   }}
                 >
-                  Supporting: {cr.beneficiaryKid}
+                  {cr.cakeName}
                 </p>
-              )}
+                <p style={{ margin: '0.2rem 0 0', color: 'var(--public-text)', fontSize: '0.9rem' }}>
+                  {cr.winnerName !== 'No bids'
+                    ? `Won by ${cr.winnerName}`
+                    : 'No bids received'}
+                </p>
+                {cr.beneficiaryKid && (
+                  <p
+                    style={{
+                      margin: '0.3rem 0 0',
+                      fontSize: '0.8rem',
+                      color: 'var(--public-text-muted)',
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    Supporting: {cr.beneficiaryKid}
+                  </p>
+                )}
+              </div>
             </div>
             <div>
               {cr.winningBid > 0 ? (

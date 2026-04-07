@@ -34,6 +34,7 @@ export async function GET(
       SELECT
         c.id AS cake_id,
         c.name AS cake_name,
+        c.imgbb_url,
         c.beneficiary_kid,
         bi.name AS winner_name,
         b.amount AS winning_bid
