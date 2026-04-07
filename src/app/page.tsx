@@ -16,36 +16,50 @@ function AuctionCard({
   auction,
   href,
   cta,
+  showSubmitCake = false,
 }: {
   auction: AuctionWithStatus;
   href: string;
   cta: string;
+  showSubmitCake?: boolean;
 }) {
+  const submissionUrl = `/cakeregistration?auction=${auction.id}`;
+
   return (
-    <Link
-      href={href}
-      className="block overflow-hidden rounded-2xl p-0 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+    <div
+      className="overflow-hidden rounded-2xl p-0 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
       style={{
         background: 'var(--public-panel)',
         border: '1px solid var(--public-border)',
       }}
     >
-      {auction.imgbb_url && (
-        <div className="h-44 w-full overflow-hidden">
-          <img
-            src={auction.imgbb_url}
-            alt={auction.title}
-            className="h-full w-full object-cover"
-          />
+      <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-start">
+        <div className="sm:w-24 sm:shrink-0">
+          <div
+            className="overflow-hidden rounded-xl"
+            style={{ background: 'var(--public-panel-soft)' }}
+          >
+            {auction.imgbb_url ? (
+              <img
+                src={auction.imgbb_url}
+                alt={auction.title}
+                className="h-40 w-full object-cover sm:h-24 sm:w-24"
+              />
+            ) : (
+              <div
+                className="flex h-40 w-full items-center justify-center text-4xl sm:h-24 sm:w-24 sm:text-2xl"
+                style={{ color: 'var(--public-text-muted)' }}
+              >
+                Cake
+              </div>
+            )}
+          </div>
         </div>
-      )}
 
-      <div className="p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-3">
             <h2
-              className="truncate text-xl font-semibold"
+              className="text-xl font-semibold"
               style={{ color: 'var(--public-text)' }}
             >
               {auction.title}
@@ -91,15 +105,30 @@ function AuctionCard({
           </dl>
         </div>
 
-        <span
-          className="shrink-0 text-sm font-semibold"
-          style={{ color: 'var(--public-accent)' }}
-        >
-          {cta}
-        </span>
+        <div className="flex shrink-0 flex-col gap-2 sm:w-40">
+          <Link
+            href={href}
+            className="inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90"
+            style={{ background: 'var(--public-accent)' }}
+          >
+            {cta}
+          </Link>
+          {showSubmitCake && (
+            <Link
+              href={submissionUrl}
+              className="inline-flex items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:opacity-90"
+              style={{
+                borderColor: 'var(--public-border)',
+                background: 'var(--public-panel)',
+                color: 'var(--public-text)',
+              }}
+            >
+              Submit Cake
+            </Link>
+          )}
+        </div>
       </div>
-      </div>
-    </Link>
+    </div>
   );
 }
 
@@ -205,6 +234,7 @@ export default async function Home() {
                   auction={auction}
                   href={`/auction/${auction.id}`}
                   cta="Preview Auction"
+                  showSubmitCake
                 />
               ))}
             </div>

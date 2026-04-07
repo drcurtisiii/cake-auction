@@ -539,13 +539,26 @@ export default function AuctionPage() {
             Return to Auctions List
           </a>
           {effectiveStatus === 'preview' && (
-            <a
-              href={`/api/calendar/${auctionId}`}
-              className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90"
-              style={{ background: 'var(--public-accent)' }}
-            >
-              Add to Calendar
-            </a>
+            <>
+              <a
+                href={`/cakeregistration?auction=${auctionId}`}
+                className="inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:opacity-90"
+                style={{
+                  borderColor: 'var(--public-border)',
+                  background: 'var(--public-panel)',
+                  color: 'var(--public-text)',
+                }}
+              >
+                Submit Cake
+              </a>
+              <a
+                href={`/api/calendar/${auctionId}`}
+                className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90"
+                style={{ background: 'var(--public-accent)' }}
+              >
+                Add to Calendar
+              </a>
+            </>
           )}
         </div>
       </header>
