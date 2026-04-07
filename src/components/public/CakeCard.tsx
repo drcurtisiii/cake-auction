@@ -6,9 +6,12 @@ import { generateBidAmounts } from '@/lib/bid-buttons';
 
 interface CakeCardProps {
   cake: Cake & { currentBid?: number; bidCount?: number };
+  lotNumber: number;
+  isFavorite: boolean;
   auctionStatus: EffectiveAuctionStatus;
   onBidClick: (cakeId: string, amount: number) => void;
   onOpenDetails: (cake: Cake & { currentBid?: number; bidCount?: number }) => void;
+  onToggleFavorite: (cakeId: string) => void;
 }
 
 /** Random warm background for the placeholder when there is no image */
@@ -31,9 +34,12 @@ function placeholderGradient(id: string) {
 
 export const CakeCard: React.FC<CakeCardProps> = ({
   cake,
+  lotNumber,
+  isFavorite,
   auctionStatus,
   onBidClick,
   onOpenDetails,
+  onToggleFavorite,
 }) => {
   const currentPrice = cake.currentBid ?? cake.starting_price;
   const bidAmounts = generateBidAmounts(
@@ -91,12 +97,46 @@ export const CakeCard: React.FC<CakeCardProps> = ({
             {cake.bidCount} bid{cake.bidCount === 1 ? '' : 's'}
           </span>
         )}
+        <div className="absolute left-2 top-2 flex items-center gap-2">
+          <span
+            className="rounded-full px-2.5 py-0.5 text-xs font-semibold shadow"
+            style={{
+              background: 'var(--public-panel-soft)',
+              color: 'var(--public-text-strong)',
+            }}
+          >
+            #{lotNumber}
+          </span>
+          <button
+            type="button"
+            aria-label={isFavorite ? 'Remove favorite' : 'Favorite cake'}
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleFavorite(cake.id);
+            }}
+            className="rounded-full bg-white/90 p-1.5 text-rose-500 shadow transition-colors hover:bg-white"
+          >
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill={isFavorite ? 'currentColor' : 'none'}
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m12 21-1.45-1.32C5.4 15.04 2 11.95 2 8.15 2 5.06 4.42 2.75 7.5 2.75c1.74 0 3.41.81 4.5 2.09 1.09-1.28 2.76-2.09 4.5-2.09 3.08 0 5.5 2.31 5.5 5.4 0 3.8-3.4 6.89-8.55 11.54Z"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* ── Details ─────────────────────────────────────── */}
       <div className="flex flex-1 flex-col gap-2 p-4">
         <h3 className="text-lg font-bold" style={{ color: 'var(--public-text-strong)' }}>
-          {cake.name}
+          #{lotNumber} {cake.name}
         </h3>
 
         {cake.flavor && (
@@ -113,12 +153,10 @@ export const CakeCard: React.FC<CakeCardProps> = ({
           </p>
         )}
 
-        {cake.highest_bidder_name && (
-          <p className="text-sm" style={{ color: 'var(--public-text-muted)' }}>
-            <span className="font-medium" style={{ color: 'var(--public-text)' }}>Leading bidder:</span>{' '}
-            {cake.highest_bidder_name}
-          </p>
-        )}
+        <p className="text-sm" style={{ color: 'var(--public-text-muted)' }}>
+          <span className="font-medium" style={{ color: 'var(--public-text)' }}>Leading bidder:</span>{' '}
+          {cake.highest_bidder_name || 'N/A'}
+        </p>
 
         {cake.beneficiary_kid && (
           <p className="text-sm font-medium text-rose-600">

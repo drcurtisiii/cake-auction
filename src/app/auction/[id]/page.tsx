@@ -48,6 +48,23 @@ function useCountdown(target: string | null | undefined) {
   return remaining;
 }
 
+function sortCakesForDisplay(
+  list: (Cake & { currentBid?: number; bidCount?: number })[],
+  favorites: string[],
+) {
+  const favoriteSet = new Set(favorites);
+  const alphabetical = [...list].sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+  );
+
+  return alphabetical.sort((a, b) => {
+    const aFav = favoriteSet.has(a.id) ? 1 : 0;
+    const bFav = favoriteSet.has(b.id) ? 1 : 0;
+    if (aFav !== bFav) return bFav - aFav;
+    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /*  Page component                                                     */
 /* ------------------------------------------------------------------ */
@@ -56,6 +73,7 @@ export default function AuctionPage() {
   const params = useParams<{ id: string }>();
   const auctionId = params.id;
   const bidderStorageKey = `cake-auction-bidder-${auctionId}`;
+  const favoriteStorageKey = `cake-auction-favorites-${auctionId}`;
 
   const [auction, setAuction] = useState<Auction | null>(null);
   const [cakes, setCakes] = useState<(Cake & { currentBid?: number; bidCount?: number })[]>([]);
@@ -79,6 +97,7 @@ export default function AuctionPage() {
     bidCount?: number;
     highest_bidder_name?: string | null;
   }) | null>(null);
+  const [favoriteCakeIds, setFavoriteCakeIds] = useState<string[]>([]);
 
   /* ── Fetch data ────────────────────────────────────────── */
 
@@ -135,6 +154,21 @@ export default function AuctionPage() {
     }
     setDeviceKey(storedDeviceKey);
   }, []);
+
+  useEffect(() => {
+    const storedFavorites = localStorage.getItem(favoriteStorageKey);
+    if (!storedFavorites) return;
+    try {
+      const parsed = JSON.parse(storedFavorites);
+      if (Array.isArray(parsed)) {
+        setFavoriteCakeIds(
+          parsed.filter((value): value is string => typeof value === 'string'),
+        );
+      }
+    } catch {
+      // Ignore malformed favorite state
+    }
+  }, [favoriteStorageKey]);
 
   useEffect(() => {
     if (!auctionId || !deviceKey) return;
@@ -277,6 +311,13 @@ export default function AuctionPage() {
         : null;
 
   const countdown = useCountdown(countdownTarget);
+  const alphabeticalLotOrder = [...cakes].sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+  );
+  const lotNumberByCakeId = new Map(
+    alphabeticalLotOrder.map((cake, index) => [cake.id, index + 1]),
+  );
+  const displayedCakes = sortCakesForDisplay(cakes, favoriteCakeIds);
 
   /* ── Bid handler (placeholder — will connect to bid API) ── */
 
@@ -351,6 +392,19 @@ export default function AuctionPage() {
       }
     },
     [bidderStorageKey, pendingBid, placeBid],
+  );
+
+  const handleToggleFavorite = useCallback(
+    (cakeId: string) => {
+      setFavoriteCakeIds((prev) => {
+        const next = prev.includes(cakeId)
+          ? prev.filter((id) => id !== cakeId)
+          : [...prev, cakeId];
+        localStorage.setItem(favoriteStorageKey, JSON.stringify(next));
+        return next;
+      });
+    },
+    [favoriteStorageKey],
   );
 
   /* ── Render helpers ────────────────────────────────────── */
@@ -510,19 +564,22 @@ export default function AuctionPage() {
           </div>
         )}
 
-        {cakes.length === 0 ? (
+        {displayedCakes.length === 0 ? (
           <p className="py-12 text-center" style={{ color: 'var(--public-text-muted)' }}>
             No cakes have been added to this auction yet.
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {cakes.map((cake) => (
+            {displayedCakes.map((cake) => (
               <CakeCard
                 key={cake.id}
                 cake={cake}
+                lotNumber={lotNumberByCakeId.get(cake.id) ?? 0}
+                isFavorite={favoriteCakeIds.includes(cake.id)}
                 auctionStatus={effectiveStatus}
                 onBidClick={handleBidClick}
                 onOpenDetails={setSelectedCake}
+                onToggleFavorite={handleToggleFavorite}
               />
             ))}
           </div>
@@ -609,8 +666,9 @@ export default function AuctionPage() {
             <div className="space-y-2 text-sm text-gray-600">
               {selectedCake.flavor && <p><span className="font-medium text-gray-900">Flavor:</span> {selectedCake.flavor}</p>}
               {selectedCake.donor_name && <p><span className="font-medium text-gray-900">Donated by:</span> {selectedCake.donor_name}</p>}
+              <p><span className="font-medium text-gray-900">Cake number:</span> #{lotNumberByCakeId.get(selectedCake.id) ?? 0}</p>
               <p><span className="font-medium text-gray-900">Current bid:</span> ${(selectedCake.currentBid ?? selectedCake.starting_price).toFixed(2)}</p>
-              <p><span className="font-medium text-gray-900">Leading bidder:</span> {selectedCake.highest_bidder_name || 'No bids yet'}</p>
+              <p><span className="font-medium text-gray-900">Leading bidder:</span> {selectedCake.highest_bidder_name || 'N/A'}</p>
             </div>
 
             {effectiveStatus === 'live' && (

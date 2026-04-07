@@ -982,6 +982,7 @@ function DetailsTab({
 // ─── Cakes Tab ──────────────────────────────────────────
 
 function CakesTab({ auctionId }: { auctionId: string }) {
+  const INCREMENT_OPTIONS = ['5', '10', '15', '20', '25'] as const;
   const EMPTY_CAKE_FORM = {
     name: '',
     flavor: '',
@@ -1513,26 +1514,42 @@ function CakesTab({ auctionId }: { auctionId: string }) {
                 setCakeForm((prev) => ({ ...prev, starting_price: e.target.value }))
               }
             />
-            <Input
-              label="Min Increment"
-              type="number"
-              min="0"
-              step="0.01"
-              value={cakeForm.min_increment}
-              onChange={(e) =>
-                setCakeForm((prev) => ({ ...prev, min_increment: e.target.value }))
-              }
-            />
-            <Input
-              label="Max Increment"
-              type="number"
-              min="0"
-              step="0.01"
-              value={cakeForm.max_increment}
-              onChange={(e) =>
-                setCakeForm((prev) => ({ ...prev, max_increment: e.target.value }))
-              }
-            />
+            <div className="w-full">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                Min Increment
+              </label>
+              <select
+                value={cakeForm.min_increment}
+                onChange={(e) =>
+                  setCakeForm((prev) => ({ ...prev, min_increment: e.target.value }))
+                }
+                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
+              >
+                {INCREMENT_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    ${option}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="w-full">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                Max Increment
+              </label>
+              <select
+                value={cakeForm.max_increment}
+                onChange={(e) =>
+                  setCakeForm((prev) => ({ ...prev, max_increment: e.target.value }))
+                }
+                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
+              >
+                {INCREMENT_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    ${option}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button
