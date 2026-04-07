@@ -9,11 +9,11 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { cake_id, bidder_id, amount } = body;
+    const { cake_id, bidder_id, amount, device_key } = body;
 
-    if (!cake_id || !bidder_id || amount == null) {
+    if (!cake_id || !bidder_id || !device_key || amount == null) {
       return NextResponse.json(
-        { error: 'cake_id, bidder_id, and amount are required' },
+        { error: 'cake_id, bidder_id, device_key, and amount are required' },
         { status: 400 },
       );
     }
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     // Get the cake and its auction in one query
     const cakeRows = await sql`
-      SELECT c.id, c.starting_price, c.min_increment, c.max_increment,
+      SELECT c.id, c.auction_id, c.starting_price, c.min_increment, c.max_increment,
              a.status, a.live_at, a.close_at
       FROM cakes c
       JOIN auctions a ON a.id = c.auction_id
@@ -45,6 +45,21 @@ export async function POST(request: NextRequest) {
     }
 
     const cake = cakeRows[0];
+    const registrationRows = await sql`
+      SELECT bidder_id
+      FROM bidder_registrations
+      WHERE auction_id = ${cake.auction_id}
+        AND bidder_id = ${bidder_id}
+        AND device_key = ${device_key}
+      LIMIT 1
+    `;
+
+    if (registrationRows.length === 0) {
+      return NextResponse.json(
+        { error: 'Bidder registration not found for this auction.' },
+        { status: 403 },
+      );
+    }
 
     // Check auction is live
     const now = new Date();
@@ -110,11 +125,6 @@ export async function POST(request: NextRequest) {
     // Broadcast the new bid via Pusher (non-blocking)
     try {
       // Get auction_id from the cake
-      const auctionRows = await sql`
-        SELECT auction_id FROM cakes WHERE id = ${cake_id} LIMIT 1
-      `;
-      const auctionId = auctionRows[0]?.auction_id;
-
       // Get bidder info
       const bidderRows = await sql`
         SELECT name, phone FROM bidders WHERE id = ${bidder_id} LIMIT 1
@@ -122,8 +132,8 @@ export async function POST(request: NextRequest) {
       const bidderName = bidderRows[0]?.name ?? 'Unknown';
       const bidderPhone = bidderRows[0]?.phone ?? undefined;
 
-      if (auctionId) {
-        await broadcastBid(auctionId, {
+      if (cake.auction_id) {
+        await broadcastBid(cake.auction_id, {
           id: result[0].id,
           cake_id: result[0].cake_id,
           bidder_id: result[0].bidder_id,

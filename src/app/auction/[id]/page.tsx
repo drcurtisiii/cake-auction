@@ -7,6 +7,7 @@ import { getEffectiveStatus } from '@/lib/auction-status';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { CakeCard } from '@/components/public/CakeCard';
+import { BidderRegistration } from '@/components/public/BidderRegistration';
 import { usePusherChannel } from '@/hooks/usePusher';
 
 /* ------------------------------------------------------------------ */
@@ -51,6 +52,7 @@ function useCountdown(target: string | null | undefined) {
 export default function AuctionPage() {
   const params = useParams<{ id: string }>();
   const auctionId = params.id;
+  const bidderStorageKey = `cake-auction-bidder-${auctionId}`;
 
   const [auction, setAuction] = useState<Auction | null>(null);
   const [cakes, setCakes] = useState<(Cake & { currentBid?: number; bidCount?: number })[]>([]);
@@ -58,6 +60,17 @@ export default function AuctionPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [rulesOpen, setRulesOpen] = useState(false);
+  const [bidder, setBidder] = useState<{
+    id: string;
+    name: string;
+    phone: string;
+    device_token: string;
+  } | null>(null);
+  const [deviceKey, setDeviceKey] = useState('');
+  const [showBidderModal, setShowBidderModal] = useState(false);
+  const [pendingBid, setPendingBid] = useState<{ cakeId: string; amount: number } | null>(null);
+  const [bidMessage, setBidMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [placingBid, setPlacingBid] = useState(false);
 
   /* ── Fetch data ────────────────────────────────────────── */
 
@@ -95,6 +108,56 @@ export default function AuctionPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    const storageKey = 'cake-auction-device-key';
+    let storedDeviceKey = localStorage.getItem(storageKey);
+    if (!storedDeviceKey) {
+      storedDeviceKey = crypto.randomUUID();
+      localStorage.setItem(storageKey, storedDeviceKey);
+    }
+    setDeviceKey(storedDeviceKey);
+  }, []);
+
+  useEffect(() => {
+    if (!auctionId || !deviceKey) return;
+
+    let cancelled = false;
+
+    async function loadRegisteredBidder() {
+      try {
+        const storedBidderId = localStorage.getItem(bidderStorageKey);
+        const res = await fetch(
+          `/api/bidders?auction_id=${encodeURIComponent(auctionId)}&device_key=${encodeURIComponent(deviceKey)}`,
+        );
+
+        if (!res.ok) {
+          if (!cancelled) {
+            setBidder(null);
+            localStorage.removeItem(bidderStorageKey);
+          }
+          return;
+        }
+
+        const data = await res.json();
+        if (!cancelled) {
+          setBidder(data);
+          if (data?.id && storedBidderId !== data.id) {
+            localStorage.setItem(bidderStorageKey, data.id);
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          setBidder(null);
+        }
+      }
+    }
+
+    loadRegisteredBidder();
+    return () => {
+      cancelled = true;
+    };
+  }, [auctionId, bidderStorageKey, deviceKey]);
 
   /* ── Pusher real-time updates ─────────────────────────── */
 
@@ -160,10 +223,87 @@ export default function AuctionPage() {
 
   /* ── Bid handler (placeholder — will connect to bid API) ── */
 
-  const handleBidClick = useCallback((cakeId: string, amount: number) => {
-    // TODO: open bid confirmation modal / call bid API
-    console.log('Bid', { cakeId, amount });
-  }, []);
+  const placeBid = useCallback(
+    async (cakeId: string, amount: number, bidderId: string) => {
+      if (!deviceKey) {
+        setBidMessage({ type: 'error', text: 'Unable to identify this device. Refresh and try again.' });
+        return;
+      }
+
+      setPlacingBid(true);
+      setBidMessage(null);
+      try {
+        const res = await fetch('/api/bids', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cake_id: cakeId,
+            bidder_id: bidderId,
+            device_key: deviceKey,
+            amount,
+          }),
+        });
+
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(data?.error || 'Failed to place bid');
+        }
+
+        setCakes((prev) =>
+          prev.map((cake) =>
+            cake.id === cakeId
+              ? {
+                  ...cake,
+                  currentBid: amount,
+                  bidCount: (cake.bidCount ?? 0) + 1,
+                }
+              : cake,
+          ),
+        );
+        setBidMessage({ type: 'success', text: `Bid of $${amount.toFixed(2)} placed.` });
+      } catch (err) {
+        setBidMessage({
+          type: 'error',
+          text: err instanceof Error ? err.message : 'Failed to place bid',
+        });
+      } finally {
+        setPlacingBid(false);
+      }
+    },
+    [deviceKey],
+  );
+
+  const handleBidClick = useCallback(
+    (cakeId: string, amount: number) => {
+      if (!bidder) {
+        setPendingBid({ cakeId, amount });
+        setShowBidderModal(true);
+        return;
+      }
+
+      void placeBid(cakeId, amount, bidder.id);
+    },
+    [bidder, placeBid],
+  );
+
+  const handleRegistered = useCallback(
+    (registeredBidder: {
+      id: string;
+      name: string;
+      phone: string;
+      device_token: string;
+    }) => {
+      setBidder(registeredBidder);
+      localStorage.setItem(bidderStorageKey, registeredBidder.id);
+      setShowBidderModal(false);
+
+      if (pendingBid) {
+        void placeBid(pendingBid.cakeId, pendingBid.amount, registeredBidder.id);
+        setPendingBid(null);
+      }
+    },
+    [bidderStorageKey, pendingBid, placeBid],
+  );
 
   /* ── Render helpers ────────────────────────────────────── */
 
@@ -310,6 +450,18 @@ export default function AuctionPage() {
 
       {/* ── Cake grid ────────────────────────────────────── */}
       <main className="mx-auto max-w-6xl px-4 pb-12 pt-6">
+        {bidMessage && (
+          <div
+            className={`mb-6 rounded-xl px-4 py-3 text-sm ${
+              bidMessage.type === 'success'
+                ? 'bg-green-50 text-green-700'
+                : 'bg-red-50 text-red-700'
+            }`}
+          >
+            {bidMessage.text}
+          </div>
+        )}
+
         {cakes.length === 0 ? (
           <p className="py-12 text-center" style={{ color: 'var(--public-text-muted)' }}>
             No cakes have been added to this auction yet.
@@ -379,6 +531,17 @@ export default function AuctionPage() {
           </section>
         )}
       </main>
+
+      <BidderRegistration
+        isOpen={showBidderModal}
+        onClose={() => {
+          setShowBidderModal(false);
+          setPendingBid(null);
+        }}
+        auctionId={auctionId}
+        deviceKey={deviceKey}
+        onRegistered={handleRegistered}
+      />
     </div>
   );
 }

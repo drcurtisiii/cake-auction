@@ -58,6 +58,13 @@ export const bidderSchema = z.object({
 
 export type CreateBidderInput = z.infer<typeof bidderSchema>;
 
+export const bidderRegistrationSchema = bidderSchema.extend({
+  auction_id: z.string().uuid("Invalid auction ID"),
+  device_key: z.string().min(1, "Device key is required"),
+});
+
+export type CreateBidderRegistrationInput = z.infer<typeof bidderRegistrationSchema>;
+
 // ─── Bid ─────────────────────────────────────────────────
 
 export const bidSchema = z.object({

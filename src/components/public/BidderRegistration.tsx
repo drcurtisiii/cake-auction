@@ -15,12 +15,16 @@ interface BidderData {
 interface BidderRegistrationProps {
   isOpen: boolean;
   onClose: () => void;
+  auctionId: string;
+  deviceKey: string;
   onRegistered: (bidder: BidderData) => void;
 }
 
 export const BidderRegistration: React.FC<BidderRegistrationProps> = ({
   isOpen,
   onClose,
+  auctionId,
+  deviceKey,
   onRegistered,
 }) => {
   const [name, setName] = useState('');
@@ -48,7 +52,12 @@ export const BidderRegistration: React.FC<BidderRegistrationProps> = ({
       const res = await fetch('/api/bidders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), phone: phone.trim() }),
+        body: JSON.stringify({
+          auction_id: auctionId,
+          device_key: deviceKey,
+          name: name.trim(),
+          phone: phone.trim(),
+        }),
       });
 
       if (!res.ok) {
@@ -58,10 +67,6 @@ export const BidderRegistration: React.FC<BidderRegistrationProps> = ({
       }
 
       const bidder: BidderData = await res.json();
-
-      // Store in localStorage for future visits
-      localStorage.setItem('bidder_id', bidder.id);
-      localStorage.setItem('device_token', bidder.device_token);
 
       setName('');
       setPhone('');

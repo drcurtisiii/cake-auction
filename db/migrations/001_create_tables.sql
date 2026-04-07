@@ -58,6 +58,20 @@ CREATE TABLE bidders (
 
 CREATE INDEX idx_bidders_device_token ON bidders(device_token);
 
+CREATE TABLE bidder_registrations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  auction_id UUID NOT NULL REFERENCES auctions(id) ON DELETE CASCADE,
+  bidder_id UUID NOT NULL REFERENCES bidders(id) ON DELETE CASCADE,
+  device_key TEXT NOT NULL,
+  ip_address TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (auction_id, device_key)
+);
+
+CREATE INDEX idx_bidder_registrations_auction ON bidder_registrations(auction_id);
+CREATE INDEX idx_bidder_registrations_bidder ON bidder_registrations(bidder_id);
+
 -- 4. BIDS
 CREATE TABLE bids (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
