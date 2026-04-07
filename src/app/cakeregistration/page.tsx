@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import type { Auction } from '@/types';
 import { CAKE_REGISTRATION_CLOSE_HOURS } from '@/lib/cake-registration';
 import { formatInAppTimeZone } from '@/lib/timezone';
@@ -18,8 +17,7 @@ function formatDate(dateStr: string | null | undefined): string {
 }
 
 export default function CakeRegistrationPage() {
-  const searchParams = useSearchParams();
-  const lockedAuctionId = searchParams.get('auction') || '';
+  const [lockedAuctionId, setLockedAuctionId] = useState('');
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -42,6 +40,12 @@ export default function CakeRegistrationPage() {
     min_increment: '5',
     max_increment: '25',
   });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    setLockedAuctionId(params.get('auction') || '');
+  }, []);
 
   useEffect(() => {
     async function fetchAuctions() {
