@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getDb } from '@/lib/db';
 import { enrichAuctionWithStatus } from '@/lib/auction-status';
+import { formatInAppTimeZone } from '@/lib/timezone';
 import { Badge } from '@/components/ui/Badge';
 import type { Auction, AuctionWithStatus } from '@/types';
 
@@ -8,15 +9,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 function formatDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return 'TBD';
-
-  return new Date(dateStr).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
+  return formatInAppTimeZone(dateStr);
 }
 
 function AuctionCard({

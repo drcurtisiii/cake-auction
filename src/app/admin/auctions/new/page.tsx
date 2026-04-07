@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { getAppTimeZoneDisplay } from '@/lib/timezone';
 
 interface FormErrors {
   [key: string]: string;
@@ -11,6 +12,7 @@ interface FormErrors {
 
 export default function NewAuctionPage() {
   const router = useRouter();
+  const timeZoneDisplay = getAppTimeZoneDisplay();
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [serverError, setServerError] = useState('');
@@ -179,6 +181,9 @@ export default function NewAuctionPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
+        if (res.status === 401) {
+          throw new Error('Admin session expired. Return to /admin and log in again.');
+        }
         throw new Error(data?.error || 'Failed to create auction');
       }
 
@@ -302,6 +307,9 @@ export default function NewAuctionPage() {
         {/* Schedule */}
         <section>
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Schedule</h2>
+          <p className="mb-4 text-sm text-gray-500">
+            Times are saved in {timeZoneDisplay}.
+          </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Input
               label="Preview At"

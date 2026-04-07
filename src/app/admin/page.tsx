@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getAppTimeZoneDisplay } from '@/lib/timezone';
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const timeZoneDisplay = getAppTimeZoneDisplay();
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,7 +17,8 @@ export default function AdminLoginPage() {
     async function checkAuth() {
       try {
         const res = await fetch('/api/auth/me');
-        if (res.ok) {
+        const data = await res.json().catch(() => null);
+        if (res.ok && data?.authenticated) {
           router.push('/admin/dashboard');
           return;
         }
@@ -89,7 +92,7 @@ export default function AdminLoginPage() {
             </div>
             <h1 className="text-xl font-semibold text-gray-900">Admin Login</h1>
             <p className="mt-1 text-sm text-gray-500">
-              Enter today&apos;s date as your passcode (MMDDYY)
+              Enter today&apos;s date in the app timezone ({timeZoneDisplay}) as your passcode (MMDDYY)
             </p>
           </div>
 

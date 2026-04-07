@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import type { Auction, Cake, Rule, AuctionWithStatus } from '@/types';
 import { enrichAuctionWithStatus } from '@/lib/auction-status';
 import { DEFAULT_RULES } from '@/lib/default-rules';
+import { getAppTimeZoneDisplay, utcIsoToLocalDateTimeInput } from '@/lib/timezone';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -20,11 +21,7 @@ interface FormErrors {
 // ─── Helpers ────────────────────────────────────────────
 
 function toLocalDatetime(iso: string | null | undefined): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return utcIsoToLocalDateTimeInput(iso);
 }
 
 function toLocalDate(iso: string | null | undefined): string {
@@ -90,7 +87,12 @@ export default function AuctionDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'published' }),
       });
-      if (!res.ok) throw new Error('Failed to publish');
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error('Admin session expired. Return to /admin and log in again.');
+        }
+        throw new Error('Failed to publish');
+      }
       setShowPublish(false);
       setActionSuccess('Auction published.');
       await fetchAuction();
@@ -110,7 +112,12 @@ export default function AuctionDetailPage() {
       const res = await fetch(`/api/auctions/${auction.id}`, {
         method: 'DELETE',
       });
-      if (!res.ok) throw new Error('Failed to delete');
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error('Admin session expired. Return to /admin and log in again.');
+        }
+        throw new Error('Failed to delete');
+      }
       router.push('/admin/dashboard');
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Failed to delete');
@@ -327,6 +334,7 @@ function DetailsTab({
   onSaved: () => void;
   registerPublishHandler: (handler: (() => Promise<boolean>) | null) => void;
 }) {
+  const timeZoneDisplay = getAppTimeZoneDisplay();
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [serverError, setServerError] = useState('');
@@ -505,6 +513,9 @@ function DetailsTab({
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
+        if (res.status === 401) {
+          throw new Error('Admin session expired. Return to /admin and log in again.');
+        }
         throw new Error(data?.error || 'Failed to save');
       }
 
@@ -645,6 +656,9 @@ function DetailsTab({
         {/* Schedule */}
         <section>
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Schedule</h2>
+          <p className="mb-4 text-sm text-gray-500">
+            Times are saved in {timeZoneDisplay}.
+          </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Input
               label="Preview At"

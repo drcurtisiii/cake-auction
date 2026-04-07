@@ -4,6 +4,7 @@ import { auctionSchema } from '@/lib/validators';
 import { verifyAdmin } from '@/lib/admin-guard';
 import { seedDefaultRules } from '@/lib/default-rules';
 import { uploadImage } from '@/lib/imgbb';
+import { localDateTimeToUtcIso } from '@/lib/timezone';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,12 +48,15 @@ export async function POST(request: NextRequest) {
 
     const data = parsed.data;
     const sql = getDb();
+    const previewAt = localDateTimeToUtcIso(data.preview_at);
+    const liveAt = localDateTimeToUtcIso(data.live_at);
+    const closeAt = localDateTimeToUtcIso(data.close_at);
 
     const rows = await sql`
       INSERT INTO auctions (title, description, imgbb_url, preview_at, live_at, close_at, status,
                             pickup_date, pickup_time, pickup_location, thank_you_msg)
-      VALUES (${data.title}, ${data.description ?? null}, ${data.imgbb_url ?? null}, ${data.preview_at ?? null},
-              ${data.live_at ?? null}, ${data.close_at ?? null}, ${data.status ?? 'draft'},
+      VALUES (${data.title}, ${data.description ?? null}, ${data.imgbb_url ?? null}, ${previewAt},
+              ${liveAt}, ${closeAt}, ${data.status ?? 'draft'},
               ${data.pickup_date ?? null}, ${data.pickup_time ?? null},
               ${data.pickup_location ?? null}, ${data.thank_you_msg ?? null})
       RETURNING *

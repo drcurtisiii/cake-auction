@@ -4,6 +4,7 @@ import { auctionSchema } from '@/lib/validators';
 import { verifyAdmin } from '@/lib/admin-guard';
 import { broadcastAuctionStateChange } from '@/lib/pusher-server';
 import { uploadImage } from '@/lib/imgbb';
+import { localDateTimeToUtcIso } from '@/lib/timezone';
 
 export const dynamic = 'force-dynamic';
 
@@ -73,9 +74,9 @@ export async function PUT(
       title: data.title ?? existing[0].title,
       description: 'description' in data ? (data.description ?? null) : existing[0].description,
       imgbb_url: 'imgbb_url' in data ? (data.imgbb_url ?? null) : existing[0].imgbb_url,
-      preview_at: 'preview_at' in data ? (data.preview_at ?? null) : existing[0].preview_at,
-      live_at: 'live_at' in data ? (data.live_at ?? null) : existing[0].live_at,
-      close_at: 'close_at' in data ? (data.close_at ?? null) : existing[0].close_at,
+      preview_at: 'preview_at' in data ? localDateTimeToUtcIso(data.preview_at) : existing[0].preview_at,
+      live_at: 'live_at' in data ? localDateTimeToUtcIso(data.live_at) : existing[0].live_at,
+      close_at: 'close_at' in data ? localDateTimeToUtcIso(data.close_at) : existing[0].close_at,
       status: data.status ?? existing[0].status,
       pickup_date: 'pickup_date' in data ? (data.pickup_date ?? null) : existing[0].pickup_date,
       pickup_time: 'pickup_time' in data ? (data.pickup_time ?? null) : existing[0].pickup_time,

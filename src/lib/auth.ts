@@ -1,5 +1,6 @@
 import { createHmac } from 'crypto';
-import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
+import { getAppTimeZone } from '@/lib/timezone';
 
 export const COOKIE_NAME = 'cake_auction_admin';
 
@@ -17,7 +18,7 @@ function getSecret(): string {
  * The admin passcode is today's date in MMDDYY format.
  */
 export function validatePasscode(passcode: string): boolean {
-  const today = format(new Date(), 'MMddyy');
+  const today = formatInTimeZone(new Date(), getAppTimeZone(), 'MMddyy');
   return passcode === today;
 }
 

@@ -4,20 +4,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Auction, AuctionWithStatus } from '@/types';
 import { enrichAuctionWithStatus } from '@/lib/auction-status';
+import { formatInAppTimeZone } from '@/lib/timezone';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 function formatDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return '--';
-  return new Date(dateStr).toLocaleString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
+  return dateStr ? formatInAppTimeZone(dateStr) : '--';
 }
 
 export default function DashboardPage() {
