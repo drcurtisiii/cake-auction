@@ -7,6 +7,7 @@ export const DEFAULT_RULES: string[] = [
   'Bidding closes at the posted end time - no exceptions',
   'In case of a tie, the earlier bid wins',
   'Minimum bid increments must be respected',
+  'If pickup is not completed by the end of the pickup window, the auctioneer may call down the bidder list and offer the cake at each bidder\'s last bid amount.',
   'Have fun and bid generously - it\'s all for a great cause!',
 ];
 

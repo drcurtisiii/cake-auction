@@ -14,7 +14,7 @@ export async function GET(
 
     // Verify auction exists
     const auctionRows = await sql`
-      SELECT id, title, thank_you_msg, pickup_date, pickup_time, pickup_location
+      SELECT id, title, thank_you_msg, pickup_date, pickup_time, pickup_end_time, pickup_location
       FROM auctions
       WHERE id = ${auctionId}
       LIMIT 1
@@ -36,6 +36,8 @@ export async function GET(
         c.name AS cake_name,
         c.imgbb_url,
         c.beneficiary_kid,
+        c.final_buyer_name,
+        c.final_amount_paid,
         bi.name AS winner_name,
         b.amount AS winning_bid
       FROM cakes c
@@ -53,7 +55,7 @@ export async function GET(
 
     // Grand total: sum of all winning bids
     const grandTotal = winners.reduce(
-      (sum, w) => sum + (Number(w.winning_bid) || 0),
+      (sum, w) => sum + (Number(w.final_amount_paid ?? w.winning_bid) || 0),
       0,
     );
 
@@ -61,7 +63,7 @@ export async function GET(
     const kidMap = new Map<string, number>();
     for (const w of winners) {
       const kid = w.beneficiary_kid || 'Unassigned';
-      kidMap.set(kid, (kidMap.get(kid) || 0) + (Number(w.winning_bid) || 0));
+      kidMap.set(kid, (kidMap.get(kid) || 0) + (Number(w.final_amount_paid ?? w.winning_bid) || 0));
     }
     const perKidTotals = Array.from(kidMap.entries()).map(
       ([kid_name, total_raised]) => ({ kid_name, total_raised }),
@@ -72,6 +74,7 @@ export async function GET(
       thank_you_msg: auction.thank_you_msg,
       pickup_date: auction.pickup_date,
       pickup_time: auction.pickup_time,
+      pickup_end_time: auction.pickup_end_time,
       pickup_location: auction.pickup_location,
     };
 

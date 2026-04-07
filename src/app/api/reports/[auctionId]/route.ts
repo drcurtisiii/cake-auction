@@ -25,7 +25,7 @@ export async function GET(
 
     // Verify auction exists
     const auctionRows = await sql`
-      SELECT id, title
+      SELECT id, title, pickup_date, pickup_time, pickup_end_time, pickup_location
       FROM auctions
       WHERE id = ${auctionId}
       LIMIT 1
@@ -44,6 +44,9 @@ export async function GET(
         c.id AS cake_id,
         c.name AS cake_name,
         c.beneficiary_kid,
+        c.picked_up,
+        c.final_buyer_name,
+        c.final_amount_paid,
         bi.name AS winner_name,
         bi.phone AS winner_phone,
         b.amount AS winning_bid,
@@ -66,9 +69,12 @@ export async function GET(
       const header = 'Cake,Winner,Phone,Winning Bid,Beneficiary Kid';
       const rows = winners.map((w) => {
         const cake = csvEscape(w.cake_name || '');
-        const winner = csvEscape(w.winner_name || '');
+        const winner = csvEscape(w.final_buyer_name || w.winner_name || '');
         const phone = csvEscape(w.winner_phone || '');
-        const bid = w.winning_bid != null ? Number(w.winning_bid).toFixed(2) : '0.00';
+        const bid =
+          (w.final_amount_paid ?? w.winning_bid) != null
+            ? Number(w.final_amount_paid ?? w.winning_bid).toFixed(2)
+            : '0.00';
         const kid = csvEscape(w.beneficiary_kid || '');
         return `${cake},${winner},${phone},${bid},${kid}`;
       });
@@ -106,6 +112,11 @@ export async function GET(
       0,
     );
 
+    const realizedGrandTotal = winners.reduce(
+      (sum, w) => sum + (Number(w.final_amount_paid ?? w.winning_bid) || 0),
+      0,
+    );
+
     // Per-kid totals
     const kidMap = new Map<string, number>();
     for (const w of winners) {
@@ -136,6 +147,13 @@ export async function GET(
       grandTotal,
       perKidTotals,
       cakeStats,
+      pickupWindow: {
+        date: auctionRows[0].pickup_date,
+        start_time: auctionRows[0].pickup_time,
+        end_time: auctionRows[0].pickup_end_time,
+        location: auctionRows[0].pickup_location,
+      },
+      realizedGrandTotal,
     });
   } catch (err) {
     console.error('GET /api/reports/[auctionId] error:', err);

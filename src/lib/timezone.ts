@@ -39,3 +39,21 @@ export function formatInAppTimeZone(
   if (!value) return 'TBD';
   return formatInTimeZone(value, getAppTimeZone(), dateFormat);
 }
+
+export function localDateAndTimeToUtcIso(
+  date: string | null | undefined,
+  time: string | null | undefined,
+): string | null {
+  if (!date || !time) return null;
+  return fromZonedTime(`${date}T${time}`, getAppTimeZone()).toISOString();
+}
+
+export function formatAppLocalDateAndTime(
+  date: string | null | undefined,
+  time: string | null | undefined,
+  dateFormat = 'MMM d, yyyy, h:mm a zzz',
+): string {
+  const iso = localDateAndTimeToUtcIso(date, time);
+  if (!iso) return 'TBD';
+  return formatInTimeZone(iso, getAppTimeZone(), dateFormat);
+}

@@ -6,6 +6,7 @@ import type { Auction, Cake, Rule, AuctionWithStatus } from '@/types';
 import { enrichAuctionWithStatus } from '@/lib/auction-status';
 import { DEFAULT_RULES } from '@/lib/default-rules';
 import {
+  formatAppLocalDateAndTime,
   formatInAppTimeZone,
   getAppTimeZoneDisplay,
   utcIsoToLocalDateTimeInput,
@@ -191,8 +192,8 @@ export default function AuctionDetailPage() {
     const previewTime = auction.preview_at ? formatInAppTimeZone(auction.preview_at) : 'TBD';
     const liveTime = auction.live_at ? formatInAppTimeZone(auction.live_at) : 'TBD';
     const closeTime = auction.close_at ? formatInAppTimeZone(auction.close_at) : 'TBD';
-    const pickupDate = auction.pickup_date || 'TBD';
-    const pickupTime = auction.pickup_time || 'TBD';
+    const pickupStart = formatAppLocalDateAndTime(auction.pickup_date, auction.pickup_time);
+    const pickupEnd = formatAppLocalDateAndTime(auction.pickup_date, auction.pickup_end_time);
     const pickupLocation = auction.pickup_location || 'TBD';
     const intro =
       auction.description ||
@@ -209,8 +210,8 @@ export default function AuctionDetailPage() {
       `🔨 Bidding goes live: ${liveTime}`,
       `⏰ Bidding closes: ${closeTime}`,
       '',
-      `📍 Pickup date: ${pickupDate}`,
-      `🕕 Pickup time: ${pickupTime}`,
+      `📍 Pickup starts: ${pickupStart}`,
+      `🕕 Pickup ends: ${pickupEnd}`,
       `🚗 Pickup location: ${pickupLocation}`,
       '',
       `🔗 View auction: ${auctionUrl}`,
@@ -241,8 +242,8 @@ export default function AuctionDetailPage() {
 
           <div style="margin:0 0 18px;border-radius:16px;background:#ffffff;padding:16px;border:1px solid #e5e7eb;">
             <p style="margin:0 0 10px;font-size:18px;font-weight:700;color:#1b3c6d;">📍 Pickup Details</p>
-            <p style="margin:0 0 6px;"><strong>Date:</strong> ${escapeHtml(pickupDate)}</p>
-            <p style="margin:0 0 6px;"><strong>Time:</strong> ${escapeHtml(pickupTime)}</p>
+            <p style="margin:0 0 6px;"><strong>Starts:</strong> ${escapeHtml(pickupStart)}</p>
+            <p style="margin:0 0 6px;"><strong>Ends:</strong> ${escapeHtml(pickupEnd)}</p>
             <p style="margin:0;"><strong>Location:</strong> ${escapeHtml(pickupLocation)}</p>
           </div>
 
@@ -1139,6 +1140,17 @@ function ResultsTab({ auctionId }: { auctionId: string }) {
   const { bind, unbind } = usePusherChannel(auctionId);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [savingPickupId, setSavingPickupId] = useState<string | null>(null);
+  const [pickupDrafts, setPickupDrafts] = useState<
+    Record<
+      string,
+      {
+        picked_up: boolean;
+        final_buyer_name: string;
+        final_amount_paid: string;
+      }
+    >
+  >({});
   const [report, setReport] = useState<{
     winners: Array<{
       cake_id: string;
@@ -1147,6 +1159,9 @@ function ResultsTab({ auctionId }: { auctionId: string }) {
       winner_name: string | null;
       winner_phone: string | null;
       winning_bid: number | null;
+      picked_up: boolean;
+      final_buyer_name: string | null;
+      final_amount_paid: number | null;
     }>;
     allBids: Array<{
       id: string;
@@ -1158,6 +1173,7 @@ function ResultsTab({ auctionId }: { auctionId: string }) {
       bid_time: string;
     }>;
     grandTotal: number;
+    realizedGrandTotal?: number;
   } | null>(null);
 
   const fetchReport = useCallback(async () => {
@@ -1166,6 +1182,24 @@ function ResultsTab({ auctionId }: { auctionId: string }) {
       if (!res.ok) throw new Error('Failed to load results');
       const data = await res.json();
       setReport(data);
+      setPickupDrafts(
+        Object.fromEntries(
+          (data.winners || []).map((winner: {
+            cake_id: string;
+            picked_up?: boolean;
+            final_buyer_name?: string | null;
+            final_amount_paid?: number | null;
+          }) => [
+            winner.cake_id,
+            {
+              picked_up: Boolean(winner.picked_up),
+              final_buyer_name: winner.final_buyer_name || '',
+              final_amount_paid:
+                winner.final_amount_paid == null ? '' : String(Number(winner.final_amount_paid)),
+            },
+          ]),
+        ),
+      );
       setError('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load results');
@@ -1189,6 +1223,34 @@ function ResultsTab({ auctionId }: { auctionId: string }) {
       unbind('new-cake', refresh);
     };
   }, [bind, unbind, fetchReport]);
+
+  async function handleSavePickup(cakeId: string) {
+    const draft = pickupDrafts[cakeId];
+    if (!draft) return;
+
+    setSavingPickupId(cakeId);
+    setError('');
+    try {
+      const res = await fetch(`/api/cakes/${cakeId}/pickup`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          picked_up: draft.picked_up,
+          final_buyer_name: draft.final_buyer_name || undefined,
+          final_amount_paid: draft.final_amount_paid === '' ? null : Number(draft.final_amount_paid),
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || 'Failed to save pickup details');
+      }
+      await fetchReport();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save pickup details');
+    } finally {
+      setSavingPickupId(null);
+    }
+  }
 
   if (loading) {
     return (
@@ -1228,10 +1290,13 @@ function ResultsTab({ auctionId }: { auctionId: string }) {
       <div className="rounded-2xl bg-gradient-to-br from-[#E8602C] to-[#1B3C6D] px-6 py-8 text-white shadow-lg">
         <p className="text-sm uppercase tracking-wide text-[#E8EEF6]">Grand Total Raised</p>
         <p className="mt-2 text-4xl font-extrabold">${Number(report.grandTotal).toFixed(2)}</p>
+        <p className="mt-2 text-sm text-[#E8EEF6]">
+          Realized total: ${Number(report.realizedGrandTotal ?? report.grandTotal).toFixed(2)}
+        </p>
       </div>
 
       <section>
-        <h3 className="mb-3 text-base font-semibold text-gray-800">Current Winners</h3>
+        <h3 className="mb-3 text-base font-semibold text-gray-800">Current Winners / Pickup Tracking</h3>
         <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -1241,10 +1306,21 @@ function ResultsTab({ auctionId }: { auctionId: string }) {
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Phone</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Bid</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Beneficiary</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Picked Up</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Final Buyer</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Amount Paid</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Save</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
-              {report.winners.map((winner) => (
+              {report.winners.map((winner) => {
+                const draft = pickupDrafts[winner.cake_id] || {
+                  picked_up: Boolean(winner.picked_up),
+                  final_buyer_name: winner.final_buyer_name || '',
+                  final_amount_paid:
+                    winner.final_amount_paid == null ? '' : String(Number(winner.final_amount_paid)),
+                };
+                return (
                 <tr key={winner.cake_id}>
                   <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">{winner.cake_name}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{winner.winner_name || '--'}</td>
@@ -1253,8 +1329,74 @@ function ResultsTab({ auctionId }: { auctionId: string }) {
                     {winner.winning_bid != null ? `$${Number(winner.winning_bid).toFixed(2)}` : '--'}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{winner.beneficiary_kid || '--'}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={draft.picked_up}
+                        onChange={(e) =>
+                          setPickupDrafts((prev) => ({
+                            ...prev,
+                            [winner.cake_id]: {
+                              ...draft,
+                              picked_up: e.target.checked,
+                            },
+                          }))
+                        }
+                      />
+                      <span>{draft.picked_up ? 'Yes' : 'No'}</span>
+                    </label>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-700">
+                    <input
+                      value={draft.final_buyer_name}
+                      onChange={(e) =>
+                        setPickupDrafts((prev) => ({
+                          ...prev,
+                          [winner.cake_id]: {
+                            ...draft,
+                            final_buyer_name: e.target.value,
+                          },
+                        }))
+                      }
+                      placeholder={winner.winner_name || 'Buyer name'}
+                      className="w-40 rounded border border-gray-300 px-2 py-1 text-sm"
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-700">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={draft.final_amount_paid}
+                      onChange={(e) =>
+                        setPickupDrafts((prev) => ({
+                          ...prev,
+                          [winner.cake_id]: {
+                            ...draft,
+                            final_amount_paid: e.target.value,
+                          },
+                        }))
+                      }
+                      placeholder={
+                        winner.winning_bid != null ? String(Number(winner.winning_bid)) : '0'
+                      }
+                      className="w-28 rounded border border-gray-300 px-2 py-1 text-sm"
+                    />
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      loading={savingPickupId === winner.cake_id}
+                      onClick={() => handleSavePickup(winner.cake_id)}
+                    >
+                      Save
+                    </Button>
+                  </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>
@@ -1322,6 +1464,7 @@ function DetailsTab({
     close_at: toLocalDatetime(auction.close_at),
     pickup_date: toLocalDate(auction.pickup_date),
     pickup_time: auction.pickup_time || '',
+    pickup_end_time: auction.pickup_end_time || '',
     pickup_location: auction.pickup_location || '',
     thank_you_msg: auction.thank_you_msg || '',
   });
@@ -1335,6 +1478,7 @@ function DetailsTab({
       close_at: toLocalDatetime(auction.close_at),
       pickup_date: toLocalDate(auction.pickup_date),
       pickup_time: auction.pickup_time || '',
+      pickup_end_time: auction.pickup_end_time || '',
       pickup_location: auction.pickup_location || '',
       thank_you_msg: auction.thank_you_msg || '',
     });
@@ -1348,6 +1492,7 @@ function DetailsTab({
     auction.close_at,
     auction.pickup_date,
     auction.pickup_time,
+    auction.pickup_end_time,
     auction.pickup_location,
     auction.thank_you_msg,
     auction.imgbb_url,
@@ -1488,6 +1633,7 @@ function DetailsTab({
         close_at: form.close_at || undefined,
         pickup_date: form.pickup_date || undefined,
         pickup_time: form.pickup_time || undefined,
+        pickup_end_time: form.pickup_end_time || undefined,
         pickup_location: form.pickup_location || undefined,
         description: form.description || undefined,
         thank_you_msg: form.thank_you_msg || undefined,
@@ -1543,6 +1689,7 @@ function DetailsTab({
     auction.close_at,
     auction.pickup_date,
     auction.pickup_time,
+    auction.pickup_end_time,
     auction.pickup_location,
     auction.thank_you_msg,
   ]);
@@ -1685,10 +1832,16 @@ function DetailsTab({
               onChange={(e) => updateField('pickup_date', e.target.value)}
             />
             <Input
-              label="Pickup Time"
+              label="Pickup Start Time"
               type="time"
               value={form.pickup_time}
               onChange={(e) => updateField('pickup_time', e.target.value)}
+            />
+            <Input
+              label="Pickup End Time"
+              type="time"
+              value={form.pickup_end_time}
+              onChange={(e) => updateField('pickup_end_time', e.target.value)}
             />
             <div className="sm:col-span-2">
               <Input

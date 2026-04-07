@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import type { Auction } from '@/types';
+import { formatAppLocalDateAndTime } from '@/lib/timezone';
 
 /* ── Types for results display ───────────────────────── */
 
@@ -15,7 +16,7 @@ interface CakeResult {
 }
 
 interface ResultsData {
-  auction: Pick<Auction, 'title' | 'thank_you_msg' | 'pickup_date' | 'pickup_time' | 'pickup_location'>;
+  auction: Pick<Auction, 'title' | 'thank_you_msg' | 'pickup_date' | 'pickup_time' | 'pickup_end_time' | 'pickup_location'>;
   grandTotal: number;
   cakeResults: CakeResult[];
   kidTotals: Record<string, number>;
@@ -66,13 +67,15 @@ export default function ResultsPage() {
           cake_name: string;
           imgbb_url: string | null;
           winner_name: string | null;
+          final_buyer_name: string | null;
+          final_amount_paid: number | null;
           winning_bid: number | null;
           beneficiary_kid: string | null;
         }) => ({
           cakeName: winner.cake_name,
           imageUrl: winner.imgbb_url,
-          winnerName: winner.winner_name || 'No bids',
-          winningBid: Number(winner.winning_bid || 0),
+          winnerName: winner.final_buyer_name || winner.winner_name || 'No bids',
+          winningBid: Number((winner.final_amount_paid ?? winner.winning_bid) || 0),
           beneficiaryKid: winner.beneficiary_kid,
         }));
 
@@ -134,6 +137,8 @@ export default function ResultsPage() {
 
   const { auction, grandTotal, cakeResults, kidTotals } = data;
   const hasKidTotals = Object.keys(kidTotals).length > 0;
+  const pickupStart = formatAppLocalDateAndTime(auction.pickup_date, auction.pickup_time);
+  const pickupEnd = formatAppLocalDateAndTime(auction.pickup_date, auction.pickup_end_time);
 
   /* ── Render ────────────────────────────────────────── */
 
@@ -361,11 +366,11 @@ export default function ResultsPage() {
             Pickup Information
           </h3>
           <p style={{ margin: '0.25rem 0', color: 'var(--public-text-muted)' }}>
-            <strong>Date:</strong> {auction.pickup_date}
+            <strong>Starts:</strong> {pickupStart}
           </p>
-          {auction.pickup_time && (
+          {auction.pickup_end_time && (
             <p style={{ margin: '0.25rem 0', color: 'var(--public-text-muted)' }}>
-              <strong>Time:</strong> {auction.pickup_time}
+              <strong>Ends:</strong> {pickupEnd}
             </p>
           )}
           {auction.pickup_location && (

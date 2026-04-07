@@ -18,6 +18,8 @@ export function normalizeCake<T extends CakeLike>(cake: T): T {
     bid_count: cake.bid_count == null ? cake.bid_count : toNumber(cake.bid_count),
     highest_bid:
       cake.highest_bid == null ? cake.highest_bid : toNumber(cake.highest_bid),
+    final_amount_paid:
+      cake.final_amount_paid == null ? cake.final_amount_paid : toNumber(cake.final_amount_paid),
   };
 }
 

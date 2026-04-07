@@ -54,9 +54,9 @@ function escapeICSText(text: string): string {
 /**
  * Generate a valid .ics calendar file string for a given event.
  */
-export function generateICS(event: ICSEvent): string {
+export function generateICS(event: ICSEvent | ICSEvent[]): string {
   const now = toICSDate(new Date().toISOString());
-  const uid = generateUID();
+  const events = Array.isArray(event) ? event : [event];
 
   const lines = [
     'BEGIN:VCALENDAR',
@@ -64,17 +64,22 @@ export function generateICS(event: ICSEvent): string {
     'PRODID:-//CakeAuction//Pickup Event//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    'BEGIN:VEVENT',
-    `UID:${uid}`,
-    `DTSTAMP:${now}`,
-    `DTSTART:${toICSDate(event.startDate)}`,
-    `DTEND:${toICSDate(event.endDate)}`,
-    `SUMMARY:${escapeICSText(event.title)}`,
-    `DESCRIPTION:${escapeICSText(event.description)}`,
-    `LOCATION:${escapeICSText(event.location)}`,
-    'END:VEVENT',
     'END:VCALENDAR',
   ];
+
+  const eventLines = events.flatMap((item) => [
+    'BEGIN:VEVENT',
+    `UID:${generateUID()}`,
+    `DTSTAMP:${now}`,
+    `DTSTART:${toICSDate(item.startDate)}`,
+    `DTEND:${toICSDate(item.endDate)}`,
+    `SUMMARY:${escapeICSText(item.title)}`,
+    `DESCRIPTION:${escapeICSText(item.description)}`,
+    `LOCATION:${escapeICSText(item.location)}`,
+    'END:VEVENT',
+  ]);
+
+  lines.splice(lines.length - 1, 0, ...eventLines);
 
   // ICS files use CRLF line endings per RFC 5545
   return lines.join('\r\n') + '\r\n';

@@ -19,6 +19,7 @@ export interface Auction {
   status: AuctionStatus;
   pickup_date?: string | null;
   pickup_time?: string | null;
+  pickup_end_time?: string | null;
   pickup_location?: string | null;
   thank_you_msg?: string | null;
   created_at: string;
@@ -59,6 +60,9 @@ export interface Cake {
   highest_bid?: number | null;
   bid_count?: number;
   highest_bidder_name?: string | null;
+  picked_up?: boolean;
+  final_buyer_name?: string | null;
+  final_amount_paid?: number | null;
   submitted_at?: string;
   approved_at?: string | null;
   created_at: string;

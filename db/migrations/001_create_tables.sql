@@ -18,6 +18,7 @@ CREATE TABLE auctions (
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
   pickup_date TEXT,
   pickup_time TEXT,
+  pickup_end_time TEXT,
   pickup_location TEXT,
   thank_you_msg TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -41,6 +42,9 @@ CREATE TABLE cakes (
   min_increment NUMERIC(10,2) NOT NULL DEFAULT 5,
   max_increment NUMERIC(10,2) NOT NULL DEFAULT 25,
   sort_order INT NOT NULL DEFAULT 0,
+  picked_up BOOLEAN NOT NULL DEFAULT FALSE,
+  final_buyer_name TEXT,
+  final_amount_paid NUMERIC(10,2),
   submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   approved_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -113,7 +117,8 @@ VALUES
   ('Bidding closes at the posted end time - no exceptions', 3),
   ('In case of a tie, the earlier bid wins', 4),
   ('Minimum bid increments must be respected', 5),
-  ('Have fun and bid generously - it''s all for a great cause!', 6);
+  ('If pickup is not completed by the end of the pickup window, the auctioneer may call down the bidder list and offer the cake at each bidder''s last bid amount.', 6),
+  ('Have fun and bid generously - it''s all for a great cause!', 7);
 
 -- 6. ADMIN SESSIONS
 CREATE TABLE admin_sessions (

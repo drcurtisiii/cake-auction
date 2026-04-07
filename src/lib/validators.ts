@@ -20,6 +20,7 @@ export const auctionSchema = z.object({
   status: z.enum(["draft", "published"]).optional(),
   pickup_date: z.string().optional(),
   pickup_time: z.string().optional(),
+  pickup_end_time: z.string().optional(),
   pickup_location: z.string().optional(),
   thank_you_msg: z.string().optional(),
 });
@@ -43,9 +44,18 @@ export const cakeSchema = z.object({
   min_increment: z.number().min(0).default(5),
   max_increment: z.number().min(0).default(25),
   sort_order: z.number().int().default(0),
+  picked_up: z.boolean().optional(),
+  final_buyer_name: z.string().optional(),
+  final_amount_paid: z.number().min(0).nullable().optional(),
 });
 
 export type CreateCakeInput = z.infer<typeof cakeSchema>;
+
+export const cakePickupSchema = z.object({
+  picked_up: z.boolean(),
+  final_buyer_name: z.string().optional(),
+  final_amount_paid: z.number().min(0).nullable().optional(),
+});
 
 // ─── Bidder ──────────────────────────────────────────────
 

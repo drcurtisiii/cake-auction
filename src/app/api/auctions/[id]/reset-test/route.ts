@@ -25,8 +25,10 @@ export async function POST(
     const liveAt = new Date(now.getTime() + 1 * 60 * 1000);
     const closeAt = new Date(now.getTime() + 2 * 60 * 1000);
     const pickupAt = new Date(now.getTime() + 60 * 60 * 1000);
+    const pickupEndAt = new Date(now.getTime() + 2 * 60 * 60 * 1000);
     const pickupDate = formatInTimeZone(pickupAt, timeZone, 'yyyy-MM-dd');
     const pickupTime = formatInTimeZone(pickupAt, timeZone, 'HH:mm');
+    const pickupEndTime = formatInTimeZone(pickupEndAt, timeZone, 'HH:mm');
 
     const auctionRows = await sql`
       SELECT id
@@ -55,6 +57,7 @@ export async function POST(
           close_at = ${closeAt.toISOString()},
           pickup_date = ${pickupDate},
           pickup_time = ${pickupTime},
+          pickup_end_time = ${pickupEndTime},
           status = 'published',
           updated_at = NOW()
       WHERE id = ${id}

@@ -25,6 +25,7 @@ export default function NewAuctionPage() {
     close_at: '',
     pickup_date: '',
     pickup_time: '',
+    pickup_end_time: '',
     pickup_location: '',
     thank_you_msg: '',
   });
@@ -167,6 +168,7 @@ export default function NewAuctionPage() {
         close_at: form.close_at || undefined,
         pickup_date: form.pickup_date || undefined,
         pickup_time: form.pickup_time || undefined,
+        pickup_end_time: form.pickup_end_time || undefined,
         pickup_location: form.pickup_location || undefined,
         description: form.description || undefined,
         thank_you_msg: form.thank_you_msg || undefined,
@@ -346,10 +348,16 @@ export default function NewAuctionPage() {
               onChange={(e) => updateField('pickup_date', e.target.value)}
             />
             <Input
-              label="Pickup Time"
+              label="Pickup Start Time"
               type="time"
               value={form.pickup_time}
               onChange={(e) => updateField('pickup_time', e.target.value)}
+            />
+            <Input
+              label="Pickup End Time"
+              type="time"
+              value={form.pickup_end_time}
+              onChange={(e) => updateField('pickup_end_time', e.target.value)}
             />
             <div className="sm:col-span-2">
               <Input

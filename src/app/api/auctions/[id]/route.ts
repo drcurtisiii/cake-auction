@@ -84,6 +84,7 @@ export async function PUT(
       status: data.status ?? existing[0].status,
       pickup_date: 'pickup_date' in data ? (data.pickup_date ?? null) : existing[0].pickup_date,
       pickup_time: 'pickup_time' in data ? (data.pickup_time ?? null) : existing[0].pickup_time,
+      pickup_end_time: 'pickup_end_time' in data ? (data.pickup_end_time ?? null) : existing[0].pickup_end_time,
       pickup_location: 'pickup_location' in data ? (data.pickup_location ?? null) : existing[0].pickup_location,
       thank_you_msg: 'thank_you_msg' in data ? (data.thank_you_msg ?? null) : existing[0].thank_you_msg,
     };
@@ -100,6 +101,7 @@ export async function PUT(
           status = ${merged.status},
           pickup_date = ${merged.pickup_date},
           pickup_time = ${merged.pickup_time},
+          pickup_end_time = ${merged.pickup_end_time},
           pickup_location = ${merged.pickup_location},
           thank_you_msg = ${merged.thank_you_msg},
           updated_at = NOW()

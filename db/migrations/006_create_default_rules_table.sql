@@ -15,6 +15,7 @@ FROM (
     ('Bidding closes at the posted end time - no exceptions', 3),
     ('In case of a tie, the earlier bid wins', 4),
     ('Minimum bid increments must be respected', 5),
-    ('Have fun and bid generously - it''s all for a great cause!', 6)
+    ('If pickup is not completed by the end of the pickup window, the auctioneer may call down the bidder list and offer the cake at each bidder''s last bid amount.', 6),
+    ('Have fun and bid generously - it''s all for a great cause!', 7)
 ) AS defaults(rule_text, sort_order)
 WHERE NOT EXISTS (SELECT 1 FROM default_rules);

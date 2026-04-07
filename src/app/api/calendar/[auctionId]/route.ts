@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { generateICS } from '@/lib/ics-generator';
 import type { Auction } from '@/types';
+import { localDateAndTimeToUtcIso } from '@/lib/timezone';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,13 +38,34 @@ export async function GET(
       ? new Date(auction.close_at)
       : new Date(startDate.getTime() + 60 * 60 * 1000);
 
-    const icsContent = generateICS({
-      title: `Cake Auction - ${auction.title}`,
-      description: `Join the "${auction.title}" cake auction.\n\nView auction: ${siteUrl}/auction/${auctionId}`,
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      location: siteUrl,
-    });
+    const events = [
+      {
+        title: `Cake Auction - ${auction.title}`,
+        description: `Join the "${auction.title}" cake auction.\n\nView auction: ${siteUrl}/auction/${auctionId}`,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        location: siteUrl,
+      },
+    ];
+
+    const pickupStart = localDateAndTimeToUtcIso(auction.pickup_date, auction.pickup_time);
+    const pickupEnd =
+      localDateAndTimeToUtcIso(auction.pickup_date, auction.pickup_end_time) ||
+      (pickupStart
+        ? new Date(new Date(pickupStart).getTime() + 60 * 60 * 1000).toISOString()
+        : null);
+
+    if (pickupStart && pickupEnd) {
+      events.push({
+        title: `Cake Pickup - ${auction.title}`,
+        description: `Pickup window for "${auction.title}".`,
+        startDate: pickupStart,
+        endDate: pickupEnd,
+        location: auction.pickup_location || siteUrl,
+      });
+    }
+
+    const icsContent = generateICS(events);
 
     return new NextResponse(icsContent, {
       status: 200,
