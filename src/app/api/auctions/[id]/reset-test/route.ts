@@ -22,8 +22,8 @@ export async function POST(
     const timeZone = getAppTimeZone();
     const now = new Date();
     const previewAt = now.toISOString();
-    const liveAt = new Date(now.getTime() + 2 * 60 * 1000);
-    const closeAt = new Date(now.getTime() + 5 * 60 * 1000);
+    const liveAt = new Date(now.getTime() + 1 * 60 * 1000);
+    const closeAt = new Date(now.getTime() + 2 * 60 * 1000);
     const pickupAt = new Date(now.getTime() + 60 * 60 * 1000);
     const pickupDate = formatInTimeZone(pickupAt, timeZone, 'yyyy-MM-dd');
     const pickupTime = formatInTimeZone(pickupAt, timeZone, 'HH:mm');
