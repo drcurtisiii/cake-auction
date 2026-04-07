@@ -2,11 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAppTimeZoneDisplay } from '@/lib/timezone';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const timeZoneDisplay = getAppTimeZoneDisplay();
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -91,9 +89,6 @@ export default function AdminLoginPage() {
               </svg>
             </div>
             <h1 className="text-xl font-semibold text-gray-900">Admin Login</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Enter today&apos;s date in the app timezone ({timeZoneDisplay}) as your passcode (MMDDYY)
-            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
