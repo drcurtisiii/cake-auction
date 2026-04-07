@@ -131,6 +131,12 @@ export async function POST(request: NextRequest) {
       `;
       const bidderName = bidderRows[0]?.name ?? 'Unknown';
       const bidderPhone = bidderRows[0]?.phone ?? undefined;
+      const cakeStateRows = await sql`
+        SELECT COUNT(*)::int AS bid_count
+        FROM bids
+        WHERE cake_id = ${cake_id}
+      `;
+      const bidCount = Number(cakeStateRows[0]?.bid_count ?? 0);
 
       if (cake.auction_id) {
         await broadcastBid(cake.auction_id, {
@@ -141,6 +147,8 @@ export async function POST(request: NextRequest) {
           bid_time: result[0].bid_time,
           bidder_name: bidderName,
           bidder_phone: bidderPhone,
+          bid_count: bidCount,
+          highest_bidder_name: bidderName,
         });
       }
     } catch (pusherErr) {

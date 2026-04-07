@@ -18,6 +18,8 @@ interface BidPayload {
   bid_time: string;
   bidder_name: string;
   bidder_phone?: string;
+  bid_count?: number;
+  highest_bidder_name?: string;
 }
 
 /**

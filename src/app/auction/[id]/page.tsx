@@ -85,9 +85,9 @@ export default function AuctionPage() {
   const fetchData = useCallback(async () => {
     try {
       const [auctionRes, cakesRes, rulesRes] = await Promise.all([
-        fetch(`/api/auctions/${auctionId}`),
-        fetch(`/api/cakes?auctionId=${auctionId}`),
-        fetch(`/api/rules?auctionId=${auctionId}`),
+        fetch(`/api/auctions/${auctionId}`, { cache: 'no-store' }),
+        fetch(`/api/cakes?auctionId=${auctionId}`, { cache: 'no-store' }),
+        fetch(`/api/rules?auctionId=${auctionId}`, { cache: 'no-store' }),
       ]);
 
       if (!auctionRes.ok) throw new Error('Auction not found');
@@ -146,6 +146,7 @@ export default function AuctionPage() {
         const storedBidderId = localStorage.getItem(bidderStorageKey);
         const res = await fetch(
           `/api/bidders?auction_id=${encodeURIComponent(auctionId)}&device_key=${encodeURIComponent(deviceKey)}`,
+          { cache: 'no-store' },
         );
 
         const data = await res.json().catch(() => null);
@@ -178,11 +179,44 @@ export default function AuctionPage() {
 
   /* ── Pusher real-time updates ─────────────────────────── */
 
-  const { bind, unbind } = usePusherChannel(auctionId);
+  const { bind, unbind, connectionState } = usePusherChannel(auctionId);
 
   useEffect(() => {
-    const handleNewBid = () => {
-      void fetchData();
+    const handleNewBid = (data: {
+      cake_id: string;
+      amount: number;
+      bid_count?: number;
+      bidder_name?: string;
+      highest_bidder_name?: string;
+    }) => {
+      setCakes((prev) =>
+        prev.map((cake) =>
+          cake.id === data.cake_id
+            ? {
+                ...cake,
+                currentBid: Number(data.amount),
+                highest_bid: Number(data.amount),
+                bidCount: data.bid_count ?? cake.bidCount ?? 0,
+                bid_count: data.bid_count ?? cake.bid_count ?? 0,
+                highest_bidder_name:
+                  data.highest_bidder_name ?? data.bidder_name ?? cake.highest_bidder_name ?? null,
+              }
+            : cake,
+        ),
+      );
+      setSelectedCake((prev) =>
+        prev && prev.id === data.cake_id
+          ? {
+              ...prev,
+              currentBid: Number(data.amount),
+              highest_bid: Number(data.amount),
+              bidCount: data.bid_count ?? prev.bidCount ?? 0,
+              bid_count: data.bid_count ?? prev.bid_count ?? 0,
+              highest_bidder_name:
+                data.highest_bidder_name ?? data.bidder_name ?? prev.highest_bidder_name ?? null,
+            }
+          : prev,
+      );
     };
 
     // On 'auction-state-change': re-fetch auction data
@@ -215,6 +249,15 @@ export default function AuctionPage() {
       unbind('new-cake', handleNewCake);
     };
   }, [bind, unbind, fetchData]);
+
+  useEffect(() => {
+    if (effectiveStatus !== 'live') return;
+    const intervalMs = connectionState === 'connected' ? 15000 : 4000;
+    const intervalId = window.setInterval(() => {
+      void fetchData();
+    }, intervalMs);
+    return () => window.clearInterval(intervalId);
+  }, [connectionState, effectiveStatus, fetchData]);
 
   /* ── Derived state ─────────────────────────────────────── */
 
