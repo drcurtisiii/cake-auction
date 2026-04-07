@@ -250,14 +250,18 @@ export default function AuctionPage() {
     };
   }, [bind, unbind, fetchData]);
 
+  const liveStatusForPolling: EffectiveAuctionStatus = auction
+    ? getEffectiveStatus(auction)
+    : 'draft';
+
   useEffect(() => {
-    if (effectiveStatus !== 'live') return;
+    if (liveStatusForPolling !== 'live') return;
     const intervalMs = connectionState === 'connected' ? 15000 : 4000;
     const intervalId = window.setInterval(() => {
       void fetchData();
     }, intervalMs);
     return () => window.clearInterval(intervalId);
-  }, [connectionState, effectiveStatus, fetchData]);
+  }, [connectionState, fetchData, liveStatusForPolling]);
 
   /* ── Derived state ─────────────────────────────────────── */
 
