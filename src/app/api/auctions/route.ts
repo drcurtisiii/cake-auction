@@ -51,12 +51,13 @@ export async function POST(request: NextRequest) {
     const previewAt = localDateTimeToUtcIso(data.preview_at);
     const liveAt = localDateTimeToUtcIso(data.live_at);
     const closeAt = localDateTimeToUtcIso(data.close_at);
+    const cakeSubmissionCloseAt = localDateTimeToUtcIso(data.cake_submission_close_at);
 
     const rows = await sql`
-      INSERT INTO auctions (title, description, imgbb_url, preview_at, live_at, close_at, status,
+      INSERT INTO auctions (title, description, imgbb_url, preview_at, live_at, close_at, cake_submission_close_at, status,
                             pickup_date, pickup_time, pickup_location, thank_you_msg)
       VALUES (${data.title}, ${data.description ?? null}, ${data.imgbb_url ?? null}, ${previewAt},
-              ${liveAt}, ${closeAt}, ${data.status ?? 'draft'},
+              ${liveAt}, ${closeAt}, ${cakeSubmissionCloseAt}, ${data.status ?? 'draft'},
               ${data.pickup_date ?? null}, ${data.pickup_time ?? null},
               ${data.pickup_location ?? null}, ${data.thank_you_msg ?? null})
       RETURNING *

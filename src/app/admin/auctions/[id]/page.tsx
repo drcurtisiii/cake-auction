@@ -5,7 +5,11 @@ import { useParams, useRouter } from 'next/navigation';
 import type { Auction, Cake, Rule, AuctionWithStatus } from '@/types';
 import { enrichAuctionWithStatus } from '@/lib/auction-status';
 import { DEFAULT_RULES } from '@/lib/default-rules';
-import { getAppTimeZoneDisplay, utcIsoToLocalDateTimeInput } from '@/lib/timezone';
+import {
+  formatInAppTimeZone,
+  getAppTimeZoneDisplay,
+  utcIsoToLocalDateTimeInput,
+} from '@/lib/timezone';
 import { usePusherChannel } from '@/hooks/usePusher';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -13,7 +17,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-type Tab = 'details' | 'cakes' | 'rules' | 'results';
+type Tab = 'details' | 'cakes' | 'submissions' | 'rules' | 'results';
 
 interface FormErrors {
   [key: string]: string;
@@ -40,6 +44,7 @@ export default function AuctionDetailPage() {
   const [auction, setAuction] = useState<AuctionWithStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');
+  const [submissionCount, setSubmissionCount] = useState(0);
   const [activeTab, setActiveTab] = useState<Tab>('details');
   const [actionError, setActionError] = useState('');
   const [actionSuccess, setActionSuccess] = useState('');
@@ -67,6 +72,23 @@ export default function AuctionDetailPage() {
   useEffect(() => {
     fetchAuction();
   }, [fetchAuction]);
+
+  const fetchSubmissionCount = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/cakes?auctionId=${auctionId}`);
+      if (!res.ok) return;
+      const cakes: Cake[] = await res.json();
+      setSubmissionCount(
+        cakes.filter((cake) => cake.approval_status === 'pending').length,
+      );
+    } catch {
+      // ignore count refresh errors
+    }
+  }, [auctionId]);
+
+  useEffect(() => {
+    fetchSubmissionCount();
+  }, [fetchSubmissionCount]);
 
   async function handlePublish() {
     if (activeTab === 'details' && detailsPublishHandlerRef.current) {
@@ -154,6 +176,46 @@ export default function AuctionDetailPage() {
     }
   }
 
+  async function handleCopyAuctionDetails() {
+    if (!auction) return;
+    const siteUrl =
+      typeof window !== 'undefined'
+        ? window.location.origin
+        : process.env.NEXT_PUBLIC_SITE_URL || 'https://cake-auction-app.netlify.app';
+    const auctionUrl = `${siteUrl}/auction/${auction.id}`;
+    const calendarUrl = `${siteUrl}/api/calendar/${auction.id}`;
+    const submissionUrl = `${siteUrl}/cakeregistration?auction=${auction.id}`;
+    const submissionDeadline = auction.cake_submission_close_at
+      ? new Date(auction.cake_submission_close_at).toLocaleString()
+      : 'Default cutoff applies';
+
+    const text = [
+      auction.title,
+      auction.description || '',
+      '',
+      `Auction link: ${auctionUrl}`,
+      `Add to calendar: ${calendarUrl}`,
+      `Cake submission link: ${submissionUrl}`,
+      `Cake submission deadline: ${submissionDeadline}`,
+      `Preview: ${auction.preview_at ? new Date(auction.preview_at).toLocaleString() : 'TBD'}`,
+      `Live: ${auction.live_at ? new Date(auction.live_at).toLocaleString() : 'TBD'}`,
+      `Close: ${auction.close_at ? new Date(auction.close_at).toLocaleString() : 'TBD'}`,
+      `Pickup date: ${auction.pickup_date || 'TBD'}`,
+      `Pickup time: ${auction.pickup_time || 'TBD'}`,
+      `Pickup location: ${auction.pickup_location || 'TBD'}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setActionError('');
+      setActionSuccess('Auction details copied.');
+    } catch {
+      setActionError('Failed to copy auction details.');
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -180,6 +242,7 @@ export default function AuctionDetailPage() {
   const tabs: { key: Tab; label: string }[] = [
     { key: 'details', label: 'Details' },
     { key: 'cakes', label: 'Cakes' },
+    { key: 'submissions', label: `Submissions (${submissionCount})` },
     { key: 'rules', label: 'Rules' },
     { key: 'results', label: 'Results' },
   ];
@@ -225,7 +288,14 @@ export default function AuctionDetailPage() {
           }}
         />
       )}
-      {activeTab === 'cakes' && <CakesTab auctionId={auctionId} />}
+      {activeTab === 'cakes' && <CakesTab auctionId={auctionId} onChanged={fetchSubmissionCount} />}
+      {activeTab === 'submissions' && (
+        <SubmissionsTab
+          auction={auction}
+          onAuctionSaved={fetchAuction}
+          onCountChange={setSubmissionCount}
+        />
+      )}
       {activeTab === 'rules' && <RulesTab auctionId={auctionId} />}
       {activeTab === 'results' && <ResultsTab auctionId={auctionId} />}
 
@@ -240,6 +310,7 @@ export default function AuctionDetailPage() {
         onPublish={() => setShowPublish(true)}
         onDelete={() => setShowDelete(true)}
         onResetTest={() => setShowResetTest(true)}
+        onCopyDetails={handleCopyAuctionDetails}
       />
 
       <Modal
@@ -287,7 +358,7 @@ export default function AuctionDetailPage() {
       >
         <p className="mb-6 text-sm text-gray-600">
           This test helper will delete all bids for this auction, set preview to now,
-          set live to 2 minutes from now, set close to 5 minutes from now, and set pickup
+          set live to 1 minute from now, set close to 2 minutes from now, and set pickup
           time to 1 hour from now. This is for debugging only.
         </p>
         <div className="flex justify-end gap-3">
@@ -314,6 +385,7 @@ function AuctionActionBar({
   onPublish,
   onDelete,
   onResetTest,
+  onCopyDetails,
 }: {
   activeTab: Tab;
   auction: AuctionWithStatus;
@@ -325,6 +397,7 @@ function AuctionActionBar({
   onPublish: () => void;
   onDelete: () => void;
   onResetTest: () => void;
+  onCopyDetails: () => void;
 }) {
   const saveDisabled = activeTab !== 'details';
 
@@ -352,6 +425,9 @@ function AuctionActionBar({
           }
         >
           Save Changes
+        </Button>
+        <Button type="button" variant="secondary" onClick={onCopyDetails}>
+          Copy Auction Details
         </Button>
 
         {auction.status === 'draft' && (
@@ -386,6 +462,606 @@ function AuctionActionBar({
           Delete Auction
         </Button>
       </div>
+    </div>
+  );
+}
+
+function SubmissionsTab({
+  auction,
+  onAuctionSaved,
+  onCountChange,
+}: {
+  auction: AuctionWithStatus;
+  onAuctionSaved: () => void;
+  onCountChange: (count: number) => void;
+}) {
+  const INCREMENT_OPTIONS = ['5', '10', '15', '20', '25'] as const;
+  const [pendingCakes, setPendingCakes] = useState<Cake[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [savingDeadline, setSavingDeadline] = useState(false);
+  const [approvingCakeId, setApprovingCakeId] = useState<string | null>(null);
+  const [deletingCakeId, setDeletingCakeId] = useState<string | null>(null);
+  const [savingCake, setSavingCake] = useState(false);
+  const [reviewCake, setReviewCake] = useState<Cake | null>(null);
+  const [deadlineValue, setDeadlineValue] = useState(
+    toLocalDatetime(auction.cake_submission_close_at),
+  );
+  const [cakeForm, setCakeForm] = useState({
+    name: '',
+    flavor: '',
+    description: '',
+    donor_name: '',
+    beneficiary_kid: '',
+    submitter_email: '',
+    submitter_phone: '',
+    starting_price: '0',
+    min_increment: '5',
+    max_increment: '25',
+  });
+  const [imageBase64, setImageBase64] = useState('');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setDeadlineValue(toLocalDatetime(auction.cake_submission_close_at));
+  }, [auction.cake_submission_close_at]);
+
+  const fetchPendingCakes = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/cakes?auctionId=${auction.id}`);
+      if (!res.ok) throw new Error('Failed to load cake submissions');
+      const cakes: Cake[] = await res.json();
+      const pending = cakes.filter((cake) => cake.approval_status === 'pending');
+      setPendingCakes(pending);
+      onCountChange(pending.length);
+      setError('');
+      return pending;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load cake submissions');
+      return [] as Cake[];
+    } finally {
+      setLoading(false);
+    }
+  }, [auction.id, onCountChange]);
+
+  useEffect(() => {
+    fetchPendingCakes();
+  }, [fetchPendingCakes]);
+
+  function resetReviewForm() {
+    setReviewCake(null);
+    setCakeForm({
+      name: '',
+      flavor: '',
+      description: '',
+      donor_name: '',
+      beneficiary_kid: '',
+      submitter_email: '',
+      submitter_phone: '',
+      starting_price: '0',
+      min_increment: '5',
+      max_increment: '25',
+    });
+    setImageBase64('');
+    setImagePreview(null);
+    setIsDragging(false);
+  }
+
+  function openReviewModal(cake: Cake) {
+    setReviewCake(cake);
+    setCakeForm({
+      name: cake.name,
+      flavor: cake.flavor || '',
+      description: cake.description || '',
+      donor_name: cake.donor_name || '',
+      beneficiary_kid: cake.beneficiary_kid || '',
+      submitter_email: cake.submitter_email || '',
+      submitter_phone: cake.submitter_phone || '',
+      starting_price: String(cake.starting_price),
+      min_increment: String(cake.min_increment),
+      max_increment: String(cake.max_increment),
+    });
+    setImageBase64('');
+    setImagePreview(cake.imgbb_url || null);
+    setError('');
+    setSuccess('');
+  }
+
+  function processFile(file: File) {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setImagePreview(result);
+      setImageBase64(result.split(',')[1]);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) processFile(file);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) processFile(file);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+  }
+
+  function handlePasteEvent(e: React.ClipboardEvent) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith('image/')) {
+        const file = items[i].getAsFile();
+        if (file) {
+          e.preventDefault();
+          processFile(file);
+          return;
+        }
+      }
+    }
+  }
+
+  async function handlePasteFromClipboard() {
+    try {
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        const imageType = item.types.find((type) => type.startsWith('image/'));
+        if (imageType) {
+          const blob = await item.getType(imageType);
+          processFile(new File([blob], 'submitted-cake.png', { type: imageType }));
+          return;
+        }
+      }
+      alert('No image found in clipboard');
+    } catch {
+      alert('Could not read clipboard. Try copying an image first.');
+    }
+  }
+
+  function removeImage() {
+    setImageBase64('');
+    setImagePreview(reviewCake?.imgbb_url || null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  async function handleSaveDeadline() {
+    setSavingDeadline(true);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch(`/api/auctions/${auction.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cake_submission_close_at: deadlineValue || null,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error('Admin session expired. Return to /admin and log in again.');
+        }
+        throw new Error(data?.error || 'Failed to save submission deadline');
+      }
+      setSuccess('Cake submission deadline saved.');
+      onAuctionSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save submission deadline');
+    } finally {
+      setSavingDeadline(false);
+    }
+  }
+
+  async function handleApproveCake(cake: Cake) {
+    setApprovingCakeId(cake.id);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch(`/api/cakes/${cake.id}/approval`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approval_status: 'approved' }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || 'Failed to approve submission');
+      }
+      setSuccess(`Approved ${cake.name}.`);
+      await fetchPendingCakes();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to approve submission');
+    } finally {
+      setApprovingCakeId(null);
+    }
+  }
+
+  async function handleDeleteCake(cake: Cake) {
+    const confirmed = window.confirm(`Delete "${cake.name}"? This cannot be undone.`);
+    if (!confirmed) return;
+
+    setDeletingCakeId(cake.id);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch(`/api/cakes/${cake.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || 'Failed to delete submission');
+      }
+      setSuccess(`Deleted ${cake.name}.`);
+      if (reviewCake?.id === cake.id) {
+        resetReviewForm();
+      }
+      await fetchPendingCakes();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete submission');
+    } finally {
+      setDeletingCakeId(null);
+    }
+  }
+
+  async function handleSaveReview(e: React.FormEvent) {
+    e.preventDefault();
+    if (!reviewCake) return;
+    setSavingCake(true);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch(`/api/cakes/${reviewCake.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          auction_id: auction.id,
+          name: cakeForm.name,
+          flavor: cakeForm.flavor || undefined,
+          description: cakeForm.description || undefined,
+          donor_name: cakeForm.donor_name || undefined,
+          beneficiary_kid: cakeForm.beneficiary_kid || undefined,
+          submitter_email: cakeForm.submitter_email || undefined,
+          submitter_phone: cakeForm.submitter_phone || undefined,
+          starting_price: Number(cakeForm.starting_price) || 0,
+          min_increment: Number(cakeForm.min_increment) || 5,
+          max_increment: Number(cakeForm.max_increment) || 25,
+          sort_order: reviewCake.sort_order,
+          approval_status: reviewCake.approval_status ?? 'pending',
+          imgbb_url: imageBase64 ? undefined : reviewCake.imgbb_url,
+          image: imageBase64 || undefined,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || 'Failed to save submission review');
+      }
+      setSuccess('Submission updated.');
+      const reviewedId = reviewCake.id;
+      const refreshedPending = await fetchPendingCakes();
+      const refreshed = refreshedPending.find((cake) => cake.id === reviewedId);
+      if (refreshed) {
+        openReviewModal(refreshed);
+      } else {
+        resetReviewForm();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save submission review');
+    } finally {
+      setSavingCake(false);
+    }
+  }
+
+  const siteUrl =
+    typeof window !== 'undefined'
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_SITE_URL || 'https://cake-auction-app.netlify.app';
+  const submissionUrl = `${siteUrl}/cakeregistration?auction=${auction.id}`;
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {error && (
+        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+          {success}
+        </div>
+      )}
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Cake Submissions ({pendingCakes.length})
+          </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Review third-party cake submissions before they appear on the public auction.
+          </p>
+
+          {pendingCakes.length === 0 ? (
+            <div className="mt-4 rounded-xl border border-dashed border-gray-300 px-6 py-10 text-center">
+              <p className="text-sm text-gray-500">No pending submissions right now.</p>
+            </div>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {pendingCakes.map((cake) => (
+                <div
+                  key={cake.id}
+                  className="flex flex-col gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 shadow-sm sm:flex-row sm:items-center"
+                >
+                  <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-white">
+                    {cake.imgbb_url ? (
+                      <img src={cake.imgbb_url} alt={cake.name} className="h-full w-full object-cover" />
+                    ) : null}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-base font-semibold text-gray-900">{cake.name}</p>
+                    <p className="text-sm text-gray-600">
+                      by {cake.donor_name || 'Unknown donor'}
+                      {cake.flavor ? ` • ${cake.flavor}` : ''}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Submitted {formatInAppTimeZone(cake.submitted_at || cake.created_at)}
+                    </p>
+                    {cake.submitter_email && (
+                      <p className="text-xs text-gray-500">{cake.submitter_email}</p>
+                    )}
+                    {cake.submitter_phone && (
+                      <p className="text-xs text-gray-500">{cake.submitter_phone}</p>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 flex-wrap items-center gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => handleApproveCake(cake)}
+                      loading={approvingCakeId === cake.id}
+                    >
+                      Approve
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={() => openReviewModal(cake)}>
+                      Review
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      loading={deletingCakeId === cake.id}
+                      onClick={() => handleDeleteCake(cake)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <h3 className="text-base font-semibold text-gray-900">Submission Window</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Last date/time parents can submit cakes for this auction.
+            </p>
+            <label className="mt-4 block text-sm font-medium text-gray-700">
+              Submission closes
+            </label>
+            <input
+              type="datetime-local"
+              value={deadlineValue}
+              onChange={(e) => setDeadlineValue(e.target.value)}
+              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
+            />
+            <p className="mt-2 text-xs text-gray-500">
+              Times are saved in {getAppTimeZoneDisplay()}.
+            </p>
+            <Button className="mt-4" type="button" onClick={handleSaveDeadline} loading={savingDeadline}>
+              Save Deadline
+            </Button>
+          </div>
+
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <h3 className="text-base font-semibold text-gray-900">Submitter Link</h3>
+            <p className="mt-1 break-all text-sm text-gray-600">{submissionUrl}</p>
+            <Button
+              type="button"
+              variant="secondary"
+              className="mt-4"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(submissionUrl);
+                  setSuccess('Cake submission link copied.');
+                  setError('');
+                } catch {
+                  setError('Failed to copy cake submission link.');
+                }
+              }}
+            >
+              Copy Submission Link
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <Modal
+        isOpen={Boolean(reviewCake)}
+        onClose={resetReviewForm}
+        title={reviewCake ? `Review Submission: ${reviewCake.name}` : 'Review Submission'}
+      >
+        <form onSubmit={handleSaveReview} className="space-y-4">
+          <Input
+            label="Cake Name"
+            required
+            value={cakeForm.name}
+            onChange={(e) => setCakeForm((prev) => ({ ...prev, name: e.target.value }))}
+          />
+          <Input
+            label="Flavor"
+            value={cakeForm.flavor}
+            onChange={(e) => setCakeForm((prev) => ({ ...prev, flavor: e.target.value }))}
+          />
+          <Input
+            label="Donor Name"
+            value={cakeForm.donor_name}
+            onChange={(e) => setCakeForm((prev) => ({ ...prev, donor_name: e.target.value }))}
+          />
+          <Input
+            label="Submitter Email"
+            value={cakeForm.submitter_email}
+            onChange={(e) => setCakeForm((prev) => ({ ...prev, submitter_email: e.target.value }))}
+          />
+          <Input
+            label="Submitter Phone"
+            value={cakeForm.submitter_phone}
+            onChange={(e) => setCakeForm((prev) => ({ ...prev, submitter_phone: e.target.value }))}
+          />
+          <Input
+            label="Beneficiary Kid"
+            value={cakeForm.beneficiary_kid}
+            onChange={(e) => setCakeForm((prev) => ({ ...prev, beneficiary_kid: e.target.value }))}
+          />
+          <div className="w-full">
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+              Description
+            </label>
+            <textarea
+              rows={3}
+              value={cakeForm.description}
+              onChange={(e) => setCakeForm((prev) => ({ ...prev, description: e.target.value }))}
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
+            />
+          </div>
+          <div className="w-full">
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+              Cake Image
+            </label>
+            {imagePreview ? (
+              <div className="relative overflow-hidden rounded-lg border border-gray-200">
+                <img src={imagePreview} alt="Cake preview" className="h-44 w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white transition-colors hover:bg-black/80"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              <div
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onPaste={handlePasteEvent}
+                onClick={() => fileInputRef.current?.click()}
+                tabIndex={0}
+                className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors ${
+                  isDragging
+                    ? 'border-[#E8602C] bg-[#E8602C]/5'
+                    : 'border-gray-300 hover:border-[#E8602C]/50 hover:bg-gray-50'
+                }`}
+              >
+                <p className="text-sm font-medium text-gray-600">
+                  {isDragging ? 'Drop image here' : 'Drag, drop, select, or paste an image'}
+                </p>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePasteFromClipboard();
+                  }}
+                  className="mt-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-colors hover:bg-gray-50"
+                >
+                  Paste from Clipboard
+                </button>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <Input
+              label="Start Price"
+              type="number"
+              min="0"
+              step="0.01"
+              value={cakeForm.starting_price}
+              onChange={(e) => setCakeForm((prev) => ({ ...prev, starting_price: e.target.value }))}
+            />
+            <div className="w-full">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                Min Increment
+              </label>
+              <select
+                value={cakeForm.min_increment}
+                onChange={(e) => setCakeForm((prev) => ({ ...prev, min_increment: e.target.value }))}
+                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
+              >
+                {INCREMENT_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    ${option}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="w-full">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                Max Increment
+              </label>
+              <select
+                value={cakeForm.max_increment}
+                onChange={(e) => setCakeForm((prev) => ({ ...prev, max_increment: e.target.value }))}
+                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
+              >
+                {INCREMENT_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    ${option}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="secondary" onClick={resetReviewForm}>
+              Cancel
+            </Button>
+            <Button type="submit" loading={savingCake}>
+              Save Review
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
@@ -981,7 +1657,13 @@ function DetailsTab({
 
 // ─── Cakes Tab ──────────────────────────────────────────
 
-function CakesTab({ auctionId }: { auctionId: string }) {
+function CakesTab({
+  auctionId,
+  onChanged,
+}: {
+  auctionId: string;
+  onChanged?: () => void;
+}) {
   const INCREMENT_OPTIONS = ['5', '10', '15', '20', '25'] as const;
   const EMPTY_CAKE_FORM = {
     name: '',
@@ -1000,7 +1682,6 @@ function CakesTab({ auctionId }: { auctionId: string }) {
   const [editingCake, setEditingCake] = useState<Cake | null>(null);
   const [saving, setSaving] = useState(false);
   const [deletingCakeId, setDeletingCakeId] = useState<string | null>(null);
-  const [approvingCakeId, setApprovingCakeId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   const [cakeForm, setCakeForm] = useState(EMPTY_CAKE_FORM);
@@ -1120,13 +1801,14 @@ function CakesTab({ auctionId }: { auctionId: string }) {
       const res = await fetch(`/api/cakes?auctionId=${auctionId}`);
       if (res.ok) {
         setCakes(await res.json());
+        onChanged?.();
       }
     } catch {
       // silently fail
     } finally {
       setLoading(false);
     }
-  }, [auctionId]);
+  }, [auctionId, onChanged]);
 
   useEffect(() => {
     fetchCakes();
@@ -1211,28 +1893,6 @@ function CakesTab({ auctionId }: { auctionId: string }) {
     }
   }
 
-  async function handleApproveCake(cake: Cake) {
-    setError('');
-    setApprovingCakeId(cake.id);
-    try {
-      const res = await fetch(`/api/cakes/${cake.id}/approval`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ approval_status: 'approved' }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error || 'Failed to approve cake');
-      }
-      await fetchCakes();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to approve cake');
-    } finally {
-      setApprovingCakeId(null);
-    }
-  }
-
-  const pendingCakes = cakes.filter((cake) => cake.approval_status === 'pending');
   const approvedCakes = cakes.filter((cake) => cake.approval_status !== 'pending');
 
   if (loading) {
@@ -1260,70 +1920,7 @@ function CakesTab({ auctionId }: { auctionId: string }) {
         </div>
       )}
 
-      {pendingCakes.length > 0 && (
-        <div className="mb-8">
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
-            Pending Submissions ({pendingCakes.length})
-          </h3>
-          <div className="space-y-3">
-            {pendingCakes.map((cake) => (
-              <div
-                key={cake.id}
-                className="flex items-center gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 shadow-sm"
-              >
-                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-white">
-                  {cake.imgbb_url ? (
-                    <img
-                      src={cake.imgbb_url}
-                      alt={cake.name}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : null}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-gray-900">{cake.name}</p>
-                  <p className="text-sm text-gray-600">
-                    by {cake.donor_name || 'Unknown donor'}
-                    {cake.flavor ? ` • ${cake.flavor}` : ''}
-                  </p>
-                  {cake.submitter_email && (
-                    <p className="text-xs text-gray-500">{cake.submitter_email}</p>
-                  )}
-                  {cake.submitter_phone && (
-                    <p className="text-xs text-gray-500">{cake.submitter_phone}</p>
-                  )}
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => handleApproveCake(cake)}
-                    loading={approvingCakeId === cake.id}
-                  >
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => openEditModal(cake)}
-                  >
-                    Review
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="danger"
-                    loading={deletingCakeId === cake.id}
-                    onClick={() => handleDeleteCake(cake)}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {approvedCakes.length === 0 && pendingCakes.length === 0 && !showAdd ? (
+      {approvedCakes.length === 0 && !showAdd ? (
         <div className="rounded-xl border-2 border-dashed border-gray-300 px-6 py-12 text-center">
           <p className="text-sm text-gray-500">No cakes yet. Add one to get started.</p>
         </div>

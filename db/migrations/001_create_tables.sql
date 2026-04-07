@@ -14,6 +14,7 @@ CREATE TABLE auctions (
   preview_at TIMESTAMPTZ,
   live_at TIMESTAMPTZ,
   close_at TIMESTAMPTZ,
+  cake_submission_close_at TIMESTAMPTZ,
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
   pickup_date TEXT,
   pickup_time TEXT,

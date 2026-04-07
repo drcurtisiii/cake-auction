@@ -17,6 +17,9 @@ const cakeRegistrationSchema = cakeSchema
     submitter_email: true,
     submitter_phone: true,
     beneficiary_kid: true,
+    starting_price: true,
+    min_increment: true,
+    max_increment: true,
   })
   .extend({
     donor_name: cakeSchema.shape.donor_name.unwrap().min(1, 'Your name is required'),
@@ -100,9 +103,9 @@ export async function POST(request: NextRequest) {
         ${parsed.beneficiary_kid ?? null},
         ${image.url},
         'pending',
-        0,
-        5,
-        25,
+        ${parsed.starting_price ?? 0},
+        ${parsed.min_increment ?? 5},
+        ${parsed.max_increment ?? 25},
         ${nextSortOrder}
       )
       RETURNING id, name

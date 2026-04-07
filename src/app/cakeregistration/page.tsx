@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { Auction } from '@/types';
 import { CAKE_REGISTRATION_CLOSE_HOURS } from '@/lib/cake-registration';
+import { formatInAppTimeZone } from '@/lib/timezone';
 
 function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return 'TBD';
@@ -16,6 +18,8 @@ function formatDate(dateStr: string | null | undefined): string {
 }
 
 export default function CakeRegistrationPage() {
+  const searchParams = useSearchParams();
+  const lockedAuctionId = searchParams.get('auction') || '';
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -34,6 +38,9 @@ export default function CakeRegistrationPage() {
     flavor: '',
     description: '',
     beneficiary_kid: '',
+    starting_price: '0',
+    min_increment: '5',
+    max_increment: '25',
   });
 
   useEffect(() => {
@@ -43,9 +50,13 @@ export default function CakeRegistrationPage() {
         if (!res.ok) throw new Error('Failed to load available auctions');
         const data = (await res.json()) as Auction[];
         setAuctions(data);
+        const preferredAuctionId =
+          lockedAuctionId && data.some((auction) => auction.id === lockedAuctionId)
+            ? lockedAuctionId
+            : data[0]?.id || '';
         setForm((prev) => ({
           ...prev,
-          auction_id: prev.auction_id || data[0]?.id || '',
+          auction_id: prev.auction_id || preferredAuctionId,
         }));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load available auctions');
@@ -54,7 +65,12 @@ export default function CakeRegistrationPage() {
       }
     }
     fetchAuctions();
-  }, []);
+  }, [lockedAuctionId]);
+
+  useEffect(() => {
+    if (!lockedAuctionId) return;
+    setForm((prev) => ({ ...prev, auction_id: lockedAuctionId }));
+  }, [lockedAuctionId]);
 
   const selectedAuction = useMemo(
     () => auctions.find((auction) => auction.id === form.auction_id) || null,
@@ -140,6 +156,9 @@ export default function CakeRegistrationPage() {
           description: form.description || undefined,
           beneficiary_kid: form.beneficiary_kid || undefined,
           submitter_phone: form.submitter_phone || undefined,
+          starting_price: Number(form.starting_price) || 0,
+          min_increment: Number(form.min_increment) || 5,
+          max_increment: Number(form.max_increment) || 25,
           image: imageBase64,
         }),
       });
@@ -158,6 +177,9 @@ export default function CakeRegistrationPage() {
         flavor: '',
         description: '',
         beneficiary_kid: '',
+        starting_price: '0',
+        min_increment: '5',
+        max_increment: '25',
       });
       setImageBase64('');
       setImagePreview(null);
@@ -176,9 +198,8 @@ export default function CakeRegistrationPage() {
             Cake Registration
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base" style={{ color: 'var(--public-text-muted)' }}>
-            Want to donate a cake? Submit it here. Cake registrations close{' '}
-            {CAKE_REGISTRATION_CLOSE_HOURS} hours before bidding opens, and every
-            submission must be approved by an admin before it appears publicly.
+            Want to donate a cake? Submit it here. Every submission must be approved
+            by an admin before it appears publicly.
           </p>
         </div>
 
@@ -221,6 +242,7 @@ export default function CakeRegistrationPage() {
                 <select
                   value={form.auction_id}
                   onChange={(e) => updateField('auction_id', e.target.value)}
+                  disabled={Boolean(lockedAuctionId)}
                   className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
                 >
                   {auctions.map((auction) => (
@@ -231,7 +253,10 @@ export default function CakeRegistrationPage() {
                 </select>
                 {selectedAuction && (
                   <p className="mt-2 text-xs text-gray-500">
-                    Bidding opens {formatDate(selectedAuction.live_at)}.
+                    Bidding opens {formatDate(selectedAuction.live_at)}. Submissions close{' '}
+                    {selectedAuction.cake_submission_close_at
+                      ? formatInAppTimeZone(selectedAuction.cake_submission_close_at)
+                      : `${CAKE_REGISTRATION_CLOSE_HOURS} hours before bidding opens`}.
                   </p>
                 )}
               </div>
@@ -316,6 +341,54 @@ export default function CakeRegistrationPage() {
                   onChange={(e) => updateField('beneficiary_kid', e.target.value)}
                   className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
                 />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Starting Price
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.starting_price}
+                  onChange={(e) => updateField('starting_price', e.target.value)}
+                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Min Increment
+                </label>
+                <select
+                  value={form.min_increment}
+                  onChange={(e) => updateField('min_increment', e.target.value)}
+                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
+                >
+                  {['5', '10', '15', '20', '25'].map((option) => (
+                    <option key={option} value={option}>
+                      ${option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Max Increment
+                </label>
+                <select
+                  value={form.max_increment}
+                  onChange={(e) => updateField('max_increment', e.target.value)}
+                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
+                >
+                  {['5', '10', '15', '20', '25'].map((option) => (
+                    <option key={option} value={option}>
+                      ${option}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="sm:col-span-2">

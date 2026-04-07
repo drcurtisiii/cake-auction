@@ -77,6 +77,10 @@ export async function PUT(
       preview_at: 'preview_at' in data ? localDateTimeToUtcIso(data.preview_at) : existing[0].preview_at,
       live_at: 'live_at' in data ? localDateTimeToUtcIso(data.live_at) : existing[0].live_at,
       close_at: 'close_at' in data ? localDateTimeToUtcIso(data.close_at) : existing[0].close_at,
+      cake_submission_close_at:
+        'cake_submission_close_at' in data
+          ? localDateTimeToUtcIso(data.cake_submission_close_at)
+          : existing[0].cake_submission_close_at,
       status: data.status ?? existing[0].status,
       pickup_date: 'pickup_date' in data ? (data.pickup_date ?? null) : existing[0].pickup_date,
       pickup_time: 'pickup_time' in data ? (data.pickup_time ?? null) : existing[0].pickup_time,
@@ -92,6 +96,7 @@ export async function PUT(
           preview_at = ${merged.preview_at},
           live_at = ${merged.live_at},
           close_at = ${merged.close_at},
+          cake_submission_close_at = ${merged.cake_submission_close_at},
           status = ${merged.status},
           pickup_date = ${merged.pickup_date},
           pickup_time = ${merged.pickup_time},

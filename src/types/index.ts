@@ -15,6 +15,7 @@ export interface Auction {
   preview_at?: string | null;
   live_at?: string | null;
   close_at?: string | null;
+  cake_submission_close_at?: string | null;
   status: AuctionStatus;
   pickup_date?: string | null;
   pickup_time?: string | null;
