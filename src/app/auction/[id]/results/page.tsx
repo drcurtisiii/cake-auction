@@ -16,7 +16,10 @@ interface CakeResult {
 }
 
 interface ResultsData {
-  auction: Pick<Auction, 'title' | 'thank_you_msg' | 'pickup_date' | 'pickup_time' | 'pickup_end_time' | 'pickup_location'>;
+  auction: Pick<
+    Auction,
+    'title' | 'imgbb_url' | 'thank_you_msg' | 'pickup_date' | 'pickup_time' | 'pickup_end_time' | 'pickup_location'
+  >;
   grandTotal: number;
   cakeResults: CakeResult[];
   kidTotals: Record<string, number>;
@@ -192,6 +195,27 @@ export default function ResultsPage() {
           {auction.title} &mdash; Results
         </h2>
       </div>
+
+      {auction.imgbb_url && (
+        <div
+          style={{
+            ...card,
+            padding: 0,
+            overflow: 'hidden',
+          }}
+        >
+          <img
+            src={auction.imgbb_url}
+            alt={auction.title}
+            style={{
+              display: 'block',
+              width: '100%',
+              height: '220px',
+              objectFit: 'cover',
+            }}
+          />
+        </div>
+      )}
 
       {/* Grand Total */}
       <div

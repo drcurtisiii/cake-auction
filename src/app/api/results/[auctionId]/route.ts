@@ -14,7 +14,7 @@ export async function GET(
 
     // Verify auction exists
     const auctionRows = await sql`
-      SELECT id, title, thank_you_msg, pickup_date, pickup_time, pickup_end_time, pickup_location
+      SELECT id, title, imgbb_url, thank_you_msg, pickup_date, pickup_time, pickup_end_time, pickup_location
       FROM auctions
       WHERE id = ${auctionId}
       LIMIT 1
@@ -71,6 +71,7 @@ export async function GET(
 
     const auctionInfo = {
       title: auction.title,
+      imgbb_url: auction.imgbb_url,
       thank_you_msg: auction.thank_you_msg,
       pickup_date: auction.pickup_date,
       pickup_time: auction.pickup_time,

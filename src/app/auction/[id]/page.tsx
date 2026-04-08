@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import type { Auction, Cake, Rule, EffectiveAuctionStatus } from '@/types';
 import { getEffectiveStatus } from '@/lib/auction-status';
 import { generateBidAmounts } from '@/lib/bid-buttons';
@@ -71,6 +71,7 @@ function sortCakesForDisplay(
 
 export default function AuctionPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const auctionId = params.id;
   const bidderStorageKey = `cake-auction-bidder-${auctionId}`;
   const favoriteStorageKey = `cake-auction-favorites-${auctionId}`;
@@ -303,6 +304,13 @@ export default function AuctionPage() {
     ? getEffectiveStatus(auction)
     : 'draft';
 
+  useEffect(() => {
+    if (loading || !auction) return;
+    if (effectiveStatus === 'closed') {
+      router.replace(`/auction/${auctionId}/results`);
+    }
+  }, [auction, auctionId, effectiveStatus, loading, router]);
+
   const countdownTarget =
     effectiveStatus === 'preview'
       ? auction?.live_at
@@ -431,6 +439,17 @@ export default function AuctionPage() {
     );
   }
 
+  if (effectiveStatus === 'closed') {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#F0F4F9] to-white">
+        <div className="flex flex-col items-center gap-3">
+          <LoadingSpinner size="lg" />
+          <p className="text-sm text-gray-500">Loading results...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (effectiveStatus === 'draft') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#F0F4F9] to-white px-4">
@@ -476,20 +495,6 @@ export default function AuctionPage() {
                 Closes in {countdown}
               </span>
             )}
-          </p>
-        </div>
-      )}
-
-      {effectiveStatus === 'closed' && (
-        <div className="border-b border-gray-200 bg-gray-100 px-4 py-3 text-center">
-          <p className="text-sm font-semibold text-gray-700">
-            Auction Closed{' '}
-            <a
-              href={`/auction/${auctionId}/results`}
-              className="ml-1 text-[#E8602C] underline hover:text-[#C74E1F]"
-            >
-              View results
-            </a>
           </p>
         </div>
       )}
