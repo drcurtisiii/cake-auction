@@ -46,13 +46,15 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    let imgbbUrl = body.imgbb_url;
+    let parseInput = body;
     if (body.image) {
       const result = await uploadImage(body.image);
-      imgbbUrl = result.url;
+      parseInput = { ...body, imgbb_url: result.url };
+    } else if ('imgbb_url' in body) {
+      parseInput = { ...body, imgbb_url: body.imgbb_url };
     }
 
-    const parsed = auctionSchema.partial().safeParse({ ...body, imgbb_url: imgbbUrl });
+    const parsed = auctionSchema.partial().safeParse(parseInput);
     if (!parsed.success) {
       return NextResponse.json(
         { error: 'Validation failed', details: parsed.error.flatten() },
