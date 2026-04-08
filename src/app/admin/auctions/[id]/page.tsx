@@ -1132,6 +1132,21 @@ function ResultsTab({ auctionId }: { auctionId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [savingPickupId, setSavingPickupId] = useState<string | null>(null);
+  const [selectedCakeForCallList, setSelectedCakeForCallList] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [callListLoading, setCallListLoading] = useState(false);
+  const [callListError, setCallListError] = useState('');
+  const [callListBids, setCallListBids] = useState<
+    Array<{
+      id: string;
+      bidder_name: string;
+      bidder_phone: string | null;
+      amount: number;
+      bid_time: string;
+    }>
+  >([]);
   const [pickupDrafts, setPickupDrafts] = useState<
     Record<
       string,
@@ -1214,6 +1229,45 @@ function ResultsTab({ auctionId }: { auctionId: string }) {
       unbind('new-cake', refresh);
     };
   }, [bind, unbind, fetchReport]);
+
+  useEffect(() => {
+    if (!selectedCakeForCallList) return;
+    const cakeId = selectedCakeForCallList.id;
+
+    let cancelled = false;
+
+    async function fetchCallList() {
+      setCallListLoading(true);
+      setCallListError('');
+      try {
+        const res = await fetch(
+          `/api/bids?cake_id=${encodeURIComponent(cakeId)}`,
+          { cache: 'no-store' },
+        );
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(data?.error || 'Failed to load bid list');
+        }
+        if (!cancelled) {
+          setCallListBids(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setCallListError(err instanceof Error ? err.message : 'Failed to load bid list');
+          setCallListBids([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setCallListLoading(false);
+        }
+      }
+    }
+
+    fetchCallList();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCakeForCallList]);
 
   async function handleSavePickup(cakeId: string) {
     const draft = pickupDrafts[cakeId];
@@ -1313,7 +1367,20 @@ function ResultsTab({ auctionId }: { auctionId: string }) {
                 };
                 return (
                 <tr key={winner.cake_id}>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">{winner.cake_name}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedCakeForCallList({
+                          id: winner.cake_id,
+                          name: winner.cake_name,
+                        })
+                      }
+                      className="text-[#1B3C6D] underline decoration-[#1B3C6D]/40 underline-offset-2 hover:text-[#E8602C]"
+                    >
+                      {winner.cake_name}
+                    </button>
+                  </td>
                   <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{winner.winner_name || '--'}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{winner.winner_phone || '--'}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium text-gray-900">
@@ -1420,6 +1487,74 @@ function ResultsTab({ auctionId }: { auctionId: string }) {
           </table>
         </div>
       </section>
+
+      <Modal
+        isOpen={selectedCakeForCallList !== null}
+        onClose={() => {
+          setSelectedCakeForCallList(null);
+          setCallListError('');
+          setCallListBids([]);
+        }}
+        title={selectedCakeForCallList ? `${selectedCakeForCallList.name} Bid List` : 'Bid List'}
+      >
+        {callListLoading ? (
+          <div className="flex justify-center py-8">
+            <LoadingSpinner />
+          </div>
+        ) : callListError ? (
+          <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+            {callListError}
+          </div>
+        ) : callListBids.length === 0 ? (
+          <div className="rounded-lg bg-gray-50 px-4 py-6 text-sm text-gray-600">
+            No bids yet for this cake.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-500">
+              Sorted high to low. Use this list to call down the bidders.
+            </p>
+            <div className="overflow-hidden rounded-lg border border-gray-200">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Bidder
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Phone
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Amount
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Time
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 bg-white">
+                  {callListBids.map((bid) => (
+                    <tr key={bid.id}>
+                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">
+                        {bid.bidder_name}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
+                        {bid.bidder_phone || '--'}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-semibold text-gray-900">
+                        ${Number(bid.amount).toFixed(2)}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
+                        {new Date(bid.bid_time).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
