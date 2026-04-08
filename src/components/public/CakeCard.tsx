@@ -109,7 +109,11 @@ export const CakeCard: React.FC<CakeCardProps> = ({
           <button
             type="button"
             aria-label={isFavorite ? 'Remove favorite' : 'Favorite cake'}
+            onMouseDown={(event) => {
+              event.preventDefault();
+            }}
             onClick={(event) => {
+              event.preventDefault();
               event.stopPropagation();
               onToggleFavorite(cake.id);
             }}
