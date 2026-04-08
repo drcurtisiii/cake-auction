@@ -12,6 +12,7 @@ import { CakeCard } from '@/components/public/CakeCard';
 import { BidderRegistration } from '@/components/public/BidderRegistration';
 import { BidHistory } from '@/components/public/BidHistory';
 import { usePusherChannel } from '@/hooks/usePusher';
+import { useAuctionViewerCount } from '@/hooks/useAuctionViewerCount';
 
 /* ------------------------------------------------------------------ */
 /*  Countdown helper                                                   */
@@ -303,6 +304,11 @@ export default function AuctionPage() {
   const effectiveStatus: EffectiveAuctionStatus = auction
     ? getEffectiveStatus(auction)
     : 'draft';
+  const viewerCount = useAuctionViewerCount(
+    auctionId,
+    'public',
+    effectiveStatus === 'live',
+  );
 
   useEffect(() => {
     if (loading || !auction) return;
@@ -509,6 +515,32 @@ export default function AuctionPage() {
                 ? 'Live'
                 : 'Closed'}
           </Badge>
+          {effectiveStatus === 'live' && (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium"
+              style={{
+                borderColor: 'var(--public-border)',
+                background: 'var(--public-panel)',
+                color: 'var(--public-text)',
+              }}
+            >
+              <svg
+                className="h-3.5 w-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7S3.732 16.057 2.458 12Z"
+                />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              {viewerCount}
+            </span>
+          )}
         </div>
 
         <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl" style={{ color: 'var(--public-text-strong)' }}>

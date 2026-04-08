@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { useAuctionViewerCount } from '@/hooks/useAuctionViewerCount';
 
 type Tab = 'details' | 'cakes' | 'submissions' | 'rules' | 'results';
 
@@ -66,6 +67,11 @@ export default function AuctionDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [resettingTest, setResettingTest] = useState(false);
   const detailsPublishHandlerRef = useRef<(() => Promise<boolean>) | null>(null);
+  const liveViewerCount = useAuctionViewerCount(
+    auctionId,
+    'admin',
+    auction?.effectiveStatus === 'live',
+  );
 
   const fetchAuction = useCallback(async () => {
     try {
@@ -336,6 +342,25 @@ export default function AuctionDetailPage() {
           <Badge variant={auction.effectiveStatus}>
             {auction.effectiveStatus}
           </Badge>
+          {auction.effectiveStatus === 'live' && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-xs font-medium text-gray-700">
+              <svg
+                className="h-3.5 w-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7S3.732 16.057 2.458 12Z"
+                />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              {liveViewerCount}
+            </span>
+          )}
         </div>
       </div>
 
