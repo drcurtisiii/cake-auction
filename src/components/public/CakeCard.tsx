@@ -45,7 +45,6 @@ export const CakeCard: React.FC<CakeCardProps> = ({
   const bidAmounts = generateBidAmounts(
     currentPrice,
     cake.min_increment,
-    cake.max_increment,
   );
   const isLive = auctionStatus === 'live';
   const isClosed = auctionStatus === 'closed';
@@ -180,7 +179,7 @@ export const CakeCard: React.FC<CakeCardProps> = ({
 
         {/* ── Bid buttons ───────────────────────────────── */}
         {!isClosed && (
-          <div className="mt-2 grid grid-cols-2 gap-2">
+          <div className="mt-2 grid grid-cols-1 gap-2">
             {bidAmounts.map((amount) => (
               <button
                 key={amount}

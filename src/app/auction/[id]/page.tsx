@@ -689,7 +689,6 @@ export default function AuctionPage() {
                 {generateBidAmounts(
                   selectedCake.currentBid ?? selectedCake.starting_price,
                   selectedCake.min_increment,
-                  selectedCake.max_increment,
                 ).map((amount) => (
                   <button
                     key={amount}

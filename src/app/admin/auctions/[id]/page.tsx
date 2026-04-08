@@ -577,8 +577,7 @@ function SubmissionsTab({
     submitter_email: '',
     submitter_phone: '',
     starting_price: '0',
-    min_increment: '5',
-    max_increment: '25',
+    increment: '5',
   });
   const [imageBase64, setImageBase64] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -622,8 +621,7 @@ function SubmissionsTab({
       submitter_email: '',
       submitter_phone: '',
       starting_price: '0',
-      min_increment: '5',
-      max_increment: '25',
+      increment: '5',
     });
     setImageBase64('');
     setImagePreview(null);
@@ -641,8 +639,7 @@ function SubmissionsTab({
       submitter_email: cake.submitter_email || '',
       submitter_phone: cake.submitter_phone || '',
       starting_price: String(cake.starting_price),
-      min_increment: String(cake.min_increment),
-      max_increment: String(cake.max_increment),
+      increment: String(cake.min_increment),
     });
     setImageBase64('');
     setImagePreview(cake.imgbb_url || null);
@@ -820,8 +817,8 @@ function SubmissionsTab({
           submitter_email: cakeForm.submitter_email || undefined,
           submitter_phone: cakeForm.submitter_phone || undefined,
           starting_price: Number(cakeForm.starting_price) || 0,
-          min_increment: Number(cakeForm.min_increment) || 5,
-          max_increment: Number(cakeForm.max_increment) || 25,
+          min_increment: Number(cakeForm.increment) || 5,
+          max_increment: Number(cakeForm.increment) || 5,
           sort_order: reviewCake.sort_order,
           approval_status: reviewCake.approval_status ?? 'pending',
           imgbb_url: imageBase64 ? undefined : reviewCake.imgbb_url,
@@ -1090,7 +1087,7 @@ function SubmissionsTab({
               className="hidden"
             />
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <Input
               label="Start Price"
               type="number"
@@ -1101,27 +1098,11 @@ function SubmissionsTab({
             />
             <div className="w-full">
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Min Increment
+                Bid Increment
               </label>
               <select
-                value={cakeForm.min_increment}
-                onChange={(e) => setCakeForm((prev) => ({ ...prev, min_increment: e.target.value }))}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
-              >
-                {INCREMENT_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    ${option}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="w-full">
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Max Increment
-              </label>
-              <select
-                value={cakeForm.max_increment}
-                onChange={(e) => setCakeForm((prev) => ({ ...prev, max_increment: e.target.value }))}
+                value={cakeForm.increment}
+                onChange={(e) => setCakeForm((prev) => ({ ...prev, increment: e.target.value }))}
                 className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
               >
                 {INCREMENT_OPTIONS.map((option) => (
@@ -1914,8 +1895,7 @@ function CakesTab({
     donor_name: '',
     beneficiary_kid: '',
     starting_price: '0',
-    min_increment: '5',
-    max_increment: '25',
+    increment: '5',
   };
 
   const [cakes, setCakes] = useState<Cake[]>([]);
@@ -1923,8 +1903,11 @@ function CakesTab({
   const [showAdd, setShowAdd] = useState(false);
   const [editingCake, setEditingCake] = useState<Cake | null>(null);
   const [saving, setSaving] = useState(false);
+  const [applyingGlobals, setApplyingGlobals] = useState(false);
   const [deletingCakeId, setDeletingCakeId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [globalStartingPrice, setGlobalStartingPrice] = useState('0');
+  const [globalIncrement, setGlobalIncrement] = useState('5');
 
   const [cakeForm, setCakeForm] = useState(EMPTY_CAKE_FORM);
   const [imageBase64, setImageBase64] = useState('');
@@ -2024,8 +2007,7 @@ function CakesTab({
       donor_name: cake.donor_name || '',
       beneficiary_kid: cake.beneficiary_kid || '',
       starting_price: String(cake.starting_price),
-      min_increment: String(cake.min_increment),
-      max_increment: String(cake.max_increment),
+      increment: String(cake.min_increment),
     });
     setImageBase64('');
     setImagePreview(cake.imgbb_url || null);
@@ -2077,8 +2059,8 @@ function CakesTab({
             submitter_email: editingCake?.submitter_email || undefined,
             submitter_phone: editingCake?.submitter_phone || undefined,
             starting_price: Number(cakeForm.starting_price) || 0,
-            min_increment: Number(cakeForm.min_increment) || 5,
-            max_increment: Number(cakeForm.max_increment) || 25,
+            min_increment: Number(cakeForm.increment) || 5,
+            max_increment: Number(cakeForm.increment) || 5,
             sort_order: editingCake?.sort_order ?? cakes.length,
             approval_status: editingCake?.approval_status ?? 'approved',
             imgbb_url: imageBase64 ? undefined : editingCake?.imgbb_url,
@@ -2135,6 +2117,46 @@ function CakesTab({
     }
   }
 
+  async function handleApplyGlobals() {
+    setError('');
+    setApplyingGlobals(true);
+    try {
+      await Promise.all(
+        cakes.map(async (cake) => {
+          const res = await fetch(`/api/cakes/${cake.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              auction_id: auctionId,
+              name: cake.name,
+              flavor: cake.flavor || undefined,
+              description: cake.description || undefined,
+              donor_name: cake.donor_name || undefined,
+              beneficiary_kid: cake.beneficiary_kid || undefined,
+              submitter_email: cake.submitter_email || undefined,
+              submitter_phone: cake.submitter_phone || undefined,
+              starting_price: Number(globalStartingPrice) || 0,
+              min_increment: Number(globalIncrement) || 5,
+              max_increment: Number(globalIncrement) || 5,
+              sort_order: cake.sort_order,
+              approval_status: cake.approval_status ?? 'approved',
+              imgbb_url: cake.imgbb_url || undefined,
+            }),
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => null);
+            throw new Error(data?.error || `Failed to update ${cake.name}`);
+          }
+        }),
+      );
+      await fetchCakes();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to apply global values');
+    } finally {
+      setApplyingGlobals(false);
+    }
+  }
+
   const approvedCakes = cakes.filter((cake) => cake.approval_status !== 'pending');
 
   if (loading) {
@@ -2154,6 +2176,40 @@ function CakesTab({
         <Button size="sm" onClick={openAddModal}>
           + Add Cake
         </Button>
+      </div>
+
+      <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto]">
+          <Input
+            label="Global Start Price"
+            type="number"
+            min="0"
+            step="0.01"
+            value={globalStartingPrice}
+            onChange={(e) => setGlobalStartingPrice(e.target.value)}
+          />
+          <div className="w-full">
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+              Global Bid Increment
+            </label>
+            <select
+              value={globalIncrement}
+              onChange={(e) => setGlobalIncrement(e.target.value)}
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
+            >
+              {INCREMENT_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  ${option}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-end">
+            <Button type="button" variant="secondary" loading={applyingGlobals} onClick={handleApplyGlobals}>
+              Apply to All Cakes
+            </Button>
+          </div>
+        </div>
       </div>
 
       {error && (
@@ -2342,7 +2398,7 @@ function CakesTab({
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <Input
               label="Start Price"
               type="number"
@@ -2355,30 +2411,12 @@ function CakesTab({
             />
             <div className="w-full">
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Min Increment
+                Bid Increment
               </label>
               <select
-                value={cakeForm.min_increment}
+                value={cakeForm.increment}
                 onChange={(e) =>
-                  setCakeForm((prev) => ({ ...prev, min_increment: e.target.value }))
-                }
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
-              >
-                {INCREMENT_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    ${option}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="w-full">
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Max Increment
-              </label>
-              <select
-                value={cakeForm.max_increment}
-                onChange={(e) =>
-                  setCakeForm((prev) => ({ ...prev, max_increment: e.target.value }))
+                  setCakeForm((prev) => ({ ...prev, increment: e.target.value }))
                 }
                 className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
               >

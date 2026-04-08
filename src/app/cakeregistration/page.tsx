@@ -38,7 +38,6 @@ export default function CakeRegistrationPage() {
     beneficiary_kid: '',
     starting_price: '0',
     min_increment: '5',
-    max_increment: '25',
   });
 
   useEffect(() => {
@@ -162,7 +161,6 @@ export default function CakeRegistrationPage() {
           submitter_phone: form.submitter_phone || undefined,
           starting_price: Number(form.starting_price) || 0,
           min_increment: Number(form.min_increment) || 5,
-          max_increment: Number(form.max_increment) || 25,
           image: imageBase64,
         }),
       });
@@ -183,7 +181,6 @@ export default function CakeRegistrationPage() {
         beneficiary_kid: '',
         starting_price: '0',
         min_increment: '5',
-        max_increment: '25',
       });
       setImageBase64('');
       setImagePreview(null);
@@ -363,28 +360,11 @@ export default function CakeRegistrationPage() {
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Min Increment
+                  Bid Increment
                 </label>
                 <select
                   value={form.min_increment}
                   onChange={(e) => updateField('min_increment', e.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
-                >
-                  {['5', '10', '15', '20', '25'].map((option) => (
-                    <option key={option} value={option}>
-                      ${option}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Max Increment
-                </label>
-                <select
-                  value={form.max_increment}
-                  onChange={(e) => updateField('max_increment', e.target.value)}
                   className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#F07040] focus:outline-none focus:ring-2 focus:ring-[#E8602C]/20"
                 >
                   {['5', '10', '15', '20', '25'].map((option) => (

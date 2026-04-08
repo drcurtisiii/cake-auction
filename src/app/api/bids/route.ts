@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     // Get the cake and its auction in one query
     const cakeRows = await sql`
-      SELECT c.id, c.auction_id, c.starting_price, c.min_increment, c.max_increment,
+      SELECT c.id, c.auction_id, c.starting_price, c.min_increment,
              a.status, a.live_at, a.close_at
       FROM cakes c
       JOIN auctions a ON a.id = c.auction_id
@@ -83,7 +83,6 @@ export async function POST(request: NextRequest) {
     // Get current highest bid atomically and validate + insert
     const id = randomUUID();
     const minIncrement = Number(cake.min_increment);
-    const maxIncrement = Number(cake.max_increment);
     const startingPrice = Number(cake.starting_price);
 
     // Atomic check-and-insert: get the current max bid, validate, and insert
@@ -97,8 +96,7 @@ export async function POST(request: NextRequest) {
       INSERT INTO bids (id, cake_id, bidder_id, amount, bid_time)
       SELECT ${id}, ${cake_id}, ${bidder_id}, ${amount}, NOW()
       FROM current_max
-      WHERE ${amount} >= current_max.highest + ${minIncrement}
-        AND ${amount} <= current_max.highest + ${maxIncrement}
+      WHERE ${amount} = current_max.highest + ${minIncrement}
       RETURNING id, cake_id, bidder_id, amount, bid_time
     `;
 
@@ -112,11 +110,11 @@ export async function POST(request: NextRequest) {
       `;
       const currentHighest = Number(maxRows[0].highest);
       const minAllowed = currentHighest + minIncrement;
-      const maxAllowed = currentHighest + maxIncrement;
+      const requiredBid = currentHighest + minIncrement;
 
       return NextResponse.json(
         {
-          error: `Bid must be between $${minAllowed.toFixed(2)} and $${maxAllowed.toFixed(2)}. Current highest bid is $${currentHighest.toFixed(2)}.`,
+          error: `Bid must be exactly $${requiredBid.toFixed(2)}. Current highest bid is $${currentHighest.toFixed(2)}.`,
         },
         { status: 400 },
       );
